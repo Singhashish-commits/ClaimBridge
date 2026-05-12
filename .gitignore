@@ -1,0 +1,53 @@
+# HELP
+HELP.md
+
+# Maven
+target/
+!**/src/main/**/target/
+!**/src/test/**/target/
+
+# Maven Wrapper
+.mvn/wrapper/maven-wrapper.jar
+
+### STS ###
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings
+.springBeans
+.sts4-cache
+
+### IntelliJ IDEA ###
+.idea/
+*.iws
+*.iml
+*.ipr
+
+### NetBeans ###
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+
+# Gradle
+build/
+!**/src/main/**/build/
+!**/src/test/**/build/
+
+### VS Code ###
+.vscode/
+
+### Spring Boot ###
+# Ignore ALL real application.properties files
+**/src/main/resources/application.properties
+
+# Allow example files
+!**/src/main/resources/application.properties.example
+
+### macOS ###
+.DS_Store
+
+# Logs
+*.log

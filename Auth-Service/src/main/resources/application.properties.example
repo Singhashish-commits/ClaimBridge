@@ -1,0 +1,30 @@
+spring.application.name=claimbridge-auth-service
+server.port=8081
+
+# PostgreSQL Configuration
+spring.datasource.driver-class-name=org.postgresql.Driver
+spring.datasource.url=jdbc:postgresql://localhost:5432/YOUR_DATABASE_NAME
+spring.datasource.username=YOUR_DB_USERNAME
+spring.datasource.password=YOUR_DB_PASSWORD
+
+# JPA / Hibernate
+spring.jpa.hibernate.ddl-auto=update
+spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.PostgreSQLDialect
+
+# JWT Secret
+jwt.secret.key=YOUR_JWT_SECRET_KEY
+
+# Eureka Client
+eureka.client.service-url.defaultZone=http://localhost:8761/eureka/
+eureka.client.register-with-eureka=true
+eureka.client.fetch-registry=true
+
+# Eureka Instance
+eureka.instance.prefer-ip-address=true
+eureka.instance.ip-address=127.0.0.1
+eureka.instance.hostname=127.0.0.1
+eureka.instance.instance-id=${spring.application.name}:${server.port}
+
+# Network Configuration
+spring.cloud.inetutils.preferred-networks=127.0.0.1
+spring.cloud.inetutils.ignored-interfaces=awdl0,utun0,utun1,utun2
