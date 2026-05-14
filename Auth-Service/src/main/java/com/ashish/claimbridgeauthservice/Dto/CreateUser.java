@@ -7,11 +7,8 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class  SignUpRequest {
+public class CreateUser {
     private String name;
     private String email;
     private String password;
-    private String role; // e.g., "HOSPITAL" or "INSURER"
-    private String organizationName; //
-
 }

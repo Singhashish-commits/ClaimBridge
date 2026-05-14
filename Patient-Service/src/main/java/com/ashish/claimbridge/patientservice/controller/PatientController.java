@@ -1,6 +1,7 @@
 package com.ashish.claimbridge.patientservice.controller;
 
-import com.ashish.claimbridge.patientservice.model.Patient;
+import com.ashish.claimbridge.patientservice.dto.ApiResponse;
+import com.ashish.claimbridge.patientservice.dto.PatientDto;
 import com.ashish.claimbridge.patientservice.service.PatientService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -18,28 +19,29 @@ public class PatientController {
     }
 
     @PostMapping("/add")
-   public ResponseEntity<Patient> addPatient(@RequestBody Patient patient,
-                                             @RequestHeader("tenantId")  String tenantId,
-                                             @RequestHeader("role") String role,
-                                             @RequestHeader("email") String email) {
+   public ResponseEntity<ApiResponse> addPatient(@RequestBody PatientDto patient,
+                                                 @RequestHeader("tenantId")  String tenantId,
+                                                 @RequestHeader("role") String role,
+                                                 @RequestHeader("email") String email) {
             return patientService.savePatient(patient,role,tenantId);
     }
 
     @GetMapping("/my-patients")
-    public ResponseEntity<List<Patient>> getAllPatients(@RequestHeader("tenantId")String tenantId) {
-          return   patientService.getPatientByTenantId(tenantId);
+    public ResponseEntity<List<PatientDto>> getAllPatients(@RequestHeader("tenantId")String tenantId) {
+         return   patientService.getPatientByTenantId(tenantId);
 
     }
     @GetMapping("/get-patient/{id}")
-    public ResponseEntity<Patient> getPatientById(@PathVariable("id") Long id, @RequestHeader("tenantId") String tenantId) {
+    public ResponseEntity<PatientDto> getPatientById(@PathVariable("id") Long id, @RequestHeader("tenantId") String tenantId) {
        return  patientService.findById(id,tenantId);
 
     }
     @PutMapping("/update-patent/{id}")
-    public ResponseEntity<Patient> updatePatient(
-            @PathVariable("id")Long id, @RequestBody Patient patient,
-            @RequestHeader("tenantId")String tenantId){
-         return patientService.updatePatient(id,patient,tenantId);
+    public ResponseEntity<ApiResponse> updatePatient(
+            @PathVariable("id")Long id, @RequestBody PatientDto patient,
+            @RequestHeader("tenantId")String tenantId,
+            @RequestHeader("role") String role) {
+         return patientService.updatePatient(id,patient,tenantId,role);
 
     }
 

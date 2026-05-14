@@ -6,10 +6,14 @@ import com.ashish.claimbridgeauthservice.Repository.OrganizationRepo;
 import com.ashish.claimbridgeauthservice.Repository.UserRepository;
 import com.ashish.claimbridgeauthservice.Dto.ApiResponse;
 import com.ashish.claimbridgeauthservice.Dto.JwtResponse;
+import com.ashish.claimbridgeauthservice.event.HospitalCreateEvent;
+import com.ashish.claimbridgeauthservice.event.InsurerCreateEvent;
 import com.ashish.claimbridgeauthservice.model.Organization;
 import com.ashish.claimbridgeauthservice.model.Role;
 import com.ashish.claimbridgeauthservice.model.User;
+import feign.Response;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -27,40 +31,66 @@ public class AuthService {
     private final UserRepository userRepo;
     private final JwtService jwtService;
     private final AuthenticationManager authenticationManager;
+    private final KafkaProducerService kafkaProducerService;
     private final OrganizationRepo organizationRepo;
 
     @Autowired
-    public AuthService(PasswordEncoder passwordEncoder, UserRepository userRepo, JwtService jwtService, AuthenticationManager authenticationManager, OrganizationRepo organizationRepo) {
+    public AuthService(PasswordEncoder passwordEncoder, UserRepository userRepo, JwtService jwtService, AuthenticationManager authenticationManager, KafkaProducerService kafkaProducerService, OrganizationRepo organizationRepo) {
         this.passwordEncoder = passwordEncoder;
         this.userRepo = userRepo;
         this.jwtService = jwtService;
         this.authenticationManager = authenticationManager;
+        this.kafkaProducerService = kafkaProducerService;
         this.organizationRepo = organizationRepo;
-
     }
 
     public ResponseEntity<ApiResponse> registerUser(SignUpRequest signUpRequest) {
-        if(userRepo.findByEmail(signUpRequest.getEmail()).isPresent()) {
-            throw new UsernameNotFoundException("Email already in use");
+        System.out.println("signUpRequest:  Received here in Service layer ");
+
+        String roleStr = "ROLE_"+signUpRequest.getRole().toUpperCase();
+        if (!roleStr.equals("ROLE_HOSPITAL") && !roleStr.equals("ROLE_INSURER")) {
+            throw new RuntimeException("Invalid role for Organization registration!");
         }
+        if(userRepo.findByEmail(signUpRequest.getEmail()).isPresent()) {
+            throw new RuntimeException("Email already in use");
+        }
+
+                    String prefix = roleStr.equals("ROLE_HOSPITAL") ? "HOSP_" : "INS_";
+                    String tenantId =prefix + UUID.randomUUID().toString()
+                            .substring(0, 8).toUpperCase();
+
+            System.out.println("in Serviee layer uuid Generated ");
         User user = new User();
-        user.setPassword(passwordEncoder.encode(signUpRequest.getPassword()));
         user.setEmail(signUpRequest.getEmail());
+        user.setPassword(passwordEncoder.encode(signUpRequest.getPassword()));
+        user.setRole(Role.valueOf(roleStr));
+        user.setTenantId(tenantId);
         user.setName(signUpRequest.getName());
-        Role userRole = Role.valueOf("ROLE_"+signUpRequest.getRole().toUpperCase());
-        user.setRole(userRole);
-        Organization organization = organizationRepo.findByNameIgnoreCase((signUpRequest.getOrganizationName())).orElseGet(()->{
-            Organization newOrg = new Organization();
-            newOrg.setName(signUpRequest.getOrganizationName());
-            newOrg.setOrgType(Role.valueOf("ROLE_" + signUpRequest.getRole().toUpperCase()));
-            String prefix = newOrg.getOrgType()==Role.ROLE_HOSPITAL ? "HOSP_" :"INS_";
-            newOrg.setTenantId(prefix + UUID.randomUUID().toString().substring(0,8).toUpperCase());
-            return organizationRepo.save(newOrg);
-        });
-        user.setTenantId(organization.getTenantId());
-        user.setOrganizationName(organization.getName());
+        user.setOrganizationName(signUpRequest.getOrganizationName());
+        Organization org = new Organization();
+        org.setTenantId(tenantId);
+        org.setName(signUpRequest.getOrganizationName());
+        org.setOrgType(roleStr);
+        organizationRepo.save(org);
         userRepo.save(user);
-        return ResponseEntity.ok(new ApiResponse("Registered successfully to " + organization.getName(), true));
+
+        if(roleStr.equals("ROLE_INSURER")) {
+            InsurerCreateEvent insurer = new InsurerCreateEvent();
+            insurer.setAdminEmail(signUpRequest.getEmail());
+            insurer.setInsurerName(signUpRequest.getOrganizationName());
+            insurer.setTenantId(tenantId);
+            insurer.setAdminName(signUpRequest.getName());
+            kafkaProducerService.sendInsurerCreateEvent(insurer);
+        }
+        if(roleStr.equals("ROLE_HOSPITAL")) {
+            HospitalCreateEvent hospital = new HospitalCreateEvent();
+            hospital.setAdminEmail(signUpRequest.getEmail());
+            hospital.setHospitalName(signUpRequest.getOrganizationName());
+            hospital.setAdminName(signUpRequest.getName());
+            hospital.setTenantId(tenantId);
+            kafkaProducerService.sendHospitalCreateEvent(hospital);
+        }
+        return ResponseEntity.ok(new ApiResponse("Register Successfully",true));
 
         }
     public JwtResponse loginUser(LoginRequest loginRequest) {
@@ -84,4 +114,22 @@ public class AuthService {
     }
 
 
+    public ResponseEntity<ApiResponse> createStaff(SignUpRequest signUpRequest, String tenantId, String role) {
+        System.out.println("role is  "+role);
+        if(!role.equals("ROLE_HOSPITAL") &&!role.equals("ROLE_INSURER")) {
+            throw new RuntimeException("Unauthorized !!");
+        }
+        String staffRole = role.equals("ROLE_HOSPITAL") ? "ROLE_HOSPITAL_USER" : "ROLE_INSURER_USER";
+        User staff = new User();
+        staff.setEmail(signUpRequest.getEmail());
+        staff.setPassword(passwordEncoder.encode("Welocome@123"));
+        staff.setTenantId(tenantId);
+        staff.setOrganizationName(signUpRequest.getOrganizationName());
+        staff.setName(signUpRequest.getName());
+        staff.setRole(Role.valueOf(staffRole));
+        userRepo.save(staff);
+        return new ResponseEntity<>
+                (new ApiResponse("User Created for the Organization",true), HttpStatus.OK);
+
+    }
 }

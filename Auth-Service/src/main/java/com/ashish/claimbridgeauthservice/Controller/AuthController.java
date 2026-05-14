@@ -1,20 +1,17 @@
 package com.ashish.claimbridgeauthservice.Controller;
 
-import com.ashish.claimbridgeauthservice.Dto.LoginRequest;
-import com.ashish.claimbridgeauthservice.Dto.SignUpRequest;
+import com.ashish.claimbridgeauthservice.Dto.*;
 import com.ashish.claimbridgeauthservice.Repository.UserRepository;
 import com.ashish.claimbridgeauthservice.Service.AuthService;
 import com.ashish.claimbridgeauthservice.Service.JwtService;
-import com.ashish.claimbridgeauthservice.Dto.ApiResponse;
-import com.ashish.claimbridgeauthservice.Dto.JwtResponse;
 import com.ashish.claimbridgeauthservice.model.User;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -34,6 +31,7 @@ public class AuthController {
 
     @PostMapping("/register")
     public ResponseEntity<ApiResponse> registerUser(@RequestBody SignUpRequest signUpRequest) {
+        System.out.println("signUpRequest:  Receiverd here in Controller layer ");
         return authService.registerUser(signUpRequest);
     }
 
@@ -44,5 +42,22 @@ public class AuthController {
 
 
     }
+    @PostMapping("/create-staff")
+    public ResponseEntity<ApiResponse> createStaff(@RequestBody SignUpRequest signUpRequest,
+                                                   @RequestHeader("tenantId") String tenantId,
+                                                   @RequestHeader("role") String role){
+
+        authService.createStaff(signUpRequest,tenantId,role);
+        return new ResponseEntity<>(new ApiResponse("User Created  for the Organization",true), HttpStatus.OK);
+
+    }
+//    @PostMapping("/update-profile")
+//    public ResponseEntity<ApiResponse> updateDetails(
+//            @RequestBody UpdateProfileRequest request,
+//            @RequestHeader("tenantId")String tenantId,
+//            @RequestHeader("role")String role,
+//            ) {
+//
+//    }
 
 }

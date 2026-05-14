@@ -27,6 +27,7 @@ public class JwtFilter extends OncePerRequestFilter {
     @Autowired
     public JwtFilter(JwtService jwtService, ApplicationContext context) throws BeansException {
         this.jwtService = jwtService;
+        this.context = context;
     }
 
     @Override

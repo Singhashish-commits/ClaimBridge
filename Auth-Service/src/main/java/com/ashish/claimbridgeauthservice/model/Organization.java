@@ -7,15 +7,7 @@ import lombok.Data;
 @Data
 public class Organization {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
-
-    @Column(unique = true, nullable = false)
-    private String name;
-
-    @Column(unique = true, nullable = false)
     private String tenantId;
-
-    @Enumerated(EnumType.STRING)
-    private Role orgType;
+    private String name;
+    private String orgType;
 }

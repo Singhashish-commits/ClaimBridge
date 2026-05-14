@@ -10,7 +10,10 @@ import java.util.Optional;
 @Repository
 public interface PatientRepository extends CrudRepository<Patient, Long> {
     Optional<List<Patient>> findByTenantId(String tenantId);
-    Optional<Patient> findById(Long id);
     Optional<Patient> findByIdAndTenantId(Long id, String tenantId);
+    Optional<Patient> findByAadhaarIdAndInsuranceId(String aadhaarId, String insuranceId);
+    Optional<Patient> findByIdAndTenantIdAndAadhaarId(Long patientId, String tenantId, String aadhaarId);
 
+
+    String id(Long id);
 }
