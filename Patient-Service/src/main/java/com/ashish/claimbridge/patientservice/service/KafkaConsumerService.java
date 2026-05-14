@@ -28,7 +28,6 @@ public class KafkaConsumerService {
             ObjectMapper mapper = new ObjectMapper();
             HospitalCreateEvent event = mapper.readValue(message, HospitalCreateEvent.class);
 
-            System.out.println("Hospital event received: " + event.getTenantId());
             Hospital hospital = new Hospital();
             hospital.setHospitalZip(event.getZipCode());
             hospital.setHospitalCity(event.getCity());
@@ -50,7 +49,6 @@ public class KafkaConsumerService {
         try{
             ObjectMapper mapper = new ObjectMapper();
             InsurerCreateEvent event = mapper.readValue(message, InsurerCreateEvent.class);
-            System.out.println("Insurer event received: " + event.getTenantId());
             Insurer insurer = new Insurer();
             insurer.setInsurerName(event.getInsurerName());
             insurer.setInsurerCity(event.getCity());

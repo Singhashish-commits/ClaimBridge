@@ -31,7 +31,6 @@ public class AuthController {
 
     @PostMapping("/register")
     public ResponseEntity<ApiResponse> registerUser(@RequestBody SignUpRequest signUpRequest) {
-        System.out.println("signUpRequest:  Receiverd here in Controller layer ");
         return authService.registerUser(signUpRequest);
     }
 

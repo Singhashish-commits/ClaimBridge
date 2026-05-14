@@ -45,7 +45,6 @@ public class AuthService {
     }
 
     public ResponseEntity<ApiResponse> registerUser(SignUpRequest signUpRequest) {
-        System.out.println("signUpRequest:  Received here in Service layer ");
 
         String roleStr = "ROLE_"+signUpRequest.getRole().toUpperCase();
         if (!roleStr.equals("ROLE_HOSPITAL") && !roleStr.equals("ROLE_INSURER")) {
@@ -59,7 +58,6 @@ public class AuthService {
                     String tenantId =prefix + UUID.randomUUID().toString()
                             .substring(0, 8).toUpperCase();
 
-            System.out.println("in Serviee layer uuid Generated ");
         User user = new User();
         user.setEmail(signUpRequest.getEmail());
         user.setPassword(passwordEncoder.encode(signUpRequest.getPassword()));
@@ -115,7 +113,6 @@ public class AuthService {
 
 
     public ResponseEntity<ApiResponse> createStaff(SignUpRequest signUpRequest, String tenantId, String role) {
-        System.out.println("role is  "+role);
         if(!role.equals("ROLE_HOSPITAL") &&!role.equals("ROLE_INSURER")) {
             throw new RuntimeException("Unauthorized !!");
         }
