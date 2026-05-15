@@ -1,6 +1,7 @@
 package com.ashish.claimbridge.patientservice.service;
 
 import com.ashish.claimbridge.patientservice.dto.ApiResponse;
+import com.ashish.claimbridge.patientservice.dto.ClaimVerifyDto;
 import com.ashish.claimbridge.patientservice.dto.PatientDto;
 import com.ashish.claimbridge.patientservice.mapper.PatientDtoMapper;
 import com.ashish.claimbridge.patientservice.model.Patient;
@@ -9,6 +10,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.List;
 
@@ -21,7 +24,7 @@ public class PatientService {
     }
 
     public ResponseEntity<ApiResponse>  savePatient(PatientDto patientDto, String role, String tenantId) {
-        if(!"ROLE_HOSPITAL".equals(role)){
+        if(!"ROLE_HOSPITAL".equals(role) && !"ROLE_HOSPITAL_USER".equals(role) ) {
             throw new RuntimeException("Invalid role To Add Patient");
         }
         if ((patientDto.getInsuranceId() == null && patientDto.getInsuranceProvider() != null)
@@ -50,7 +53,10 @@ public class PatientService {
         return patient;
     }
 
-    public ResponseEntity<List<PatientDto>> getPatientByTenantId(String tenantId) {
+    public ResponseEntity<List<PatientDto>> getPatientByTenantId(String tenantId,String role) {
+        if(!"ROLE_HOSPITAL".equals(role) && !"ROLE_HOSPITAL_USER".equals(role) ) {
+            throw new RuntimeException("not Authorized to View Patient Details ");
+        }
 
          List<Patient> patients =  patientRepository.findByTenantId(tenantId)
                  .orElseThrow(()->new RuntimeException("Patient Not Found with this TenantId"+tenantId));
@@ -58,7 +64,10 @@ public class PatientService {
           return new ResponseEntity<>(patientList,HttpStatus.OK);
     }
 
-    public ResponseEntity<PatientDto> findById(Long id,String tenantId) {
+    public ResponseEntity<PatientDto> findById(Long id,String tenantId,String role) {
+        if(!"ROLE_HOSPITAL".equals(role) && !"ROLE_HOSPITAL_USER".equals(role) ) {
+            throw new RuntimeException("not Authorized to View Patient Details ");
+        }
        Patient patient = patientRepository.findByIdAndTenantId(id,tenantId)
                .orElseThrow(()-> new RuntimeException("Patient not Available with this Id"+id+"and tenantId"+tenantId));
        PatientDto patientDto = PatientDtoMapper.mapPatientEntityToPatientDto(patient);
@@ -68,7 +77,7 @@ public class PatientService {
 
 
     public ResponseEntity<ApiResponse> updatePatient(long id, PatientDto patientDto, String tenantId,String role) {
-        if(!"ROLE_HOSPITAL".equals(role)){
+        if(!"ROLE_HOSPITAL".equals(role) && !"ROLE_HOSPITAL_USER".equals(role) ) {
             throw new RuntimeException("you are not Authorized to Update Patient Details");
         }
         Patient current = patientRepository.findByIdAndTenantId(id, tenantId)
@@ -89,17 +98,26 @@ public class PatientService {
         return new ResponseEntity<>(new ApiResponse("Patient Updated Successfully",true),HttpStatus.OK);
     }
 
-    public ResponseEntity<String> deleteById(Long id, String tenantId) {
+    public ResponseEntity<String> deleteById(Long id, String tenantId,String role) {
+        if(!"ROLE_HOSPITAL".equals(role) && !"ROLE_HOSPITAL_USER".equals(role) ) {
+            throw new RuntimeException("you are not Authorized to Update Patient Details");
+        }
+
         Patient patient = patientRepository.findByIdAndTenantId(id,tenantId)
                 .orElseThrow(()-> new RuntimeException("Unauthorized: Patient does not belong to your organization."));
         patientRepository.delete(patient);
         return new ResponseEntity<>("Deleted Successfully", HttpStatus.OK);
     }
 
-    public ResponseEntity<PatientDto> verifyForClaim(String aadhaarId,String insuranceId,String tenantId,String role,Long patientId) {
-        if(!"ROLE_HOSPITAL".equals(role)){
+    public ResponseEntity<ApiResponse> verifyForClaim(Long patientId,
+                                                     ClaimVerifyDto claimVerifyDto,
+                                                      String tenantId,String role) {
+        if(!"ROLE_HOSPITAL".equals(role) && !"ROLE_HOSPITAL_USER".equals(role) ) {
             throw new RuntimeException("Unauthorized: Only Hospital staff can verify patient details");
         }
+
+        String aadhaarId = claimVerifyDto.getAadhaarId();
+        String insuranceId = claimVerifyDto.getInsuranceId();
         Patient patient = patientRepository.findByIdAndTenantIdAndAadhaarId(patientId, tenantId, aadhaarId)
                 .orElseThrow(() -> new RuntimeException("Patient Verification Failed: Record not found or Identity mismatch."));
         if (!patient.getInsuranceId().equals(insuranceId)) {
@@ -109,7 +127,7 @@ public class PatientService {
             patient.setInsuranceVerified(true);
             patientRepository.save(patient);
         }
-        PatientDto patientDto = PatientDtoMapper.mapPatientEntityToPatientDto(patient);
-        return new ResponseEntity<>(patientDto, HttpStatus.OK);
+//        PatientDto patientDto = PatientDtoMapper.mapPatientEntityToPatientDto(patient);
+        return new ResponseEntity<>(new ApiResponse("Patient Verified Successfully",true),HttpStatus.OK);
     }
 }

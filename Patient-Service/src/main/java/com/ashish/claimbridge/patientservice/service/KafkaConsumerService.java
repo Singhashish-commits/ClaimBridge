@@ -2,6 +2,7 @@ package com.ashish.claimbridge.patientservice.service;
 
 import com.ashish.claimbridge.patientservice.event.HospitalCreateEvent;
 import com.ashish.claimbridge.patientservice.event.InsurerCreateEvent;
+import com.ashish.claimbridge.patientservice.event.OrganizationUpdateEvent;
 import com.ashish.claimbridge.patientservice.model.Hospital;
 import com.ashish.claimbridge.patientservice.model.Insurer;
 import com.ashish.claimbridge.patientservice.repository.HospitalRepository;
@@ -60,6 +61,37 @@ public class KafkaConsumerService {
             insurer.setInsurerEmail(event.getAdminEmail());
             insurerRepository.save(insurer);
         }catch (Exception e){
+            e.printStackTrace();
+        }
+    }
+
+    @KafkaListener(topics= "organization-updated",groupId ="patient-service-group")
+    public void consumeOrganizationUpdated(String message) {
+        try{
+            ObjectMapper mapper = new ObjectMapper();
+            OrganizationUpdateEvent event = mapper.readValue(message, OrganizationUpdateEvent.class);
+            if(event.getType().equals("HOSPITAL")){
+                Hospital hospital= hospitalRepository.findByTenantId(event.getTenantId())
+                        .orElseThrow(()-> new RuntimeException("hospital not found"));
+                hospital.setHospitalZip(event.getZipCode());
+                hospital.setHospitalCity(event.getCity());
+                hospital.setHospitalState(event.getState());
+                hospital.setPhoneNumber(event.getPhone());
+                hospital.setHospitalAddress(event.getAddress());
+                hospitalRepository.save(hospital);
+            }
+            else{
+                Insurer insurer = insurerRepository.findByTenantId(event.getTenantId())
+                        .orElseThrow(()-> new RuntimeException("insurer not found"));
+                insurer.setInsurerAddress(event.getAddress());
+                insurer.setInsurerCity(event.getCity());
+                insurer.setInsurerPhone(event.getPhone());
+                insurer.setInsurerState(event.getState());
+                insurer.setInsurerZip(event.getZipCode());
+                insurerRepository.save(insurer);
+            }
+        }
+        catch (Exception e){
             e.printStackTrace();
         }
     }

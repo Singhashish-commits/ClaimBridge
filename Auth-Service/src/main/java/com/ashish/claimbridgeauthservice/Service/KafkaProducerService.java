@@ -2,6 +2,7 @@ package com.ashish.claimbridgeauthservice.Service;
 
 import com.ashish.claimbridgeauthservice.event.HospitalCreateEvent;
 import com.ashish.claimbridgeauthservice.event.InsurerCreateEvent;
+import com.ashish.claimbridgeauthservice.event.OrganizationUpdateEvent;
 import lombok.RequiredArgsConstructor;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
@@ -18,4 +19,7 @@ public class KafkaProducerService {
         kafkaTemplate.send("insurer-created", insurer);
     }
 
+    public void sendOrganizationUpdatevent(OrganizationUpdateEvent event) {
+        kafkaTemplate.send("organization-updated", event);
+    }
 }

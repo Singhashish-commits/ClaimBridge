@@ -1,17 +1,14 @@
 package com.ashish.claimbridgeauthservice.Service;
 
-import com.ashish.claimbridgeauthservice.Dto.LoginRequest;
-import com.ashish.claimbridgeauthservice.Dto.SignUpRequest;
+import com.ashish.claimbridgeauthservice.Dto.*;
 import com.ashish.claimbridgeauthservice.Repository.OrganizationRepo;
 import com.ashish.claimbridgeauthservice.Repository.UserRepository;
-import com.ashish.claimbridgeauthservice.Dto.ApiResponse;
-import com.ashish.claimbridgeauthservice.Dto.JwtResponse;
 import com.ashish.claimbridgeauthservice.event.HospitalCreateEvent;
 import com.ashish.claimbridgeauthservice.event.InsurerCreateEvent;
+import com.ashish.claimbridgeauthservice.event.OrganizationUpdateEvent;
 import com.ashish.claimbridgeauthservice.model.Organization;
 import com.ashish.claimbridgeauthservice.model.Role;
 import com.ashish.claimbridgeauthservice.model.User;
-import feign.Response;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -128,5 +125,23 @@ public class AuthService {
         return new ResponseEntity<>
                 (new ApiResponse("User Created for the Organization",true), HttpStatus.OK);
 
+    }
+
+    public ResponseEntity<ApiResponse> updateDetails(UpdateProfileRequest request, String tenantId, String role) {
+        if(role.equals("ROLE_HOSPITAL") && !role.equals("ROLE_INSURER")) {
+            throw new RuntimeException("Unauthorized  to Update Details of the Organization !!");
+        }
+
+        OrganizationUpdateEvent event = new OrganizationUpdateEvent();
+        event.setAddress(request.getAddress());
+        event.setCity(request.getCity());
+        event.setState(request.getState());
+        event.setZipCode(request.getZipCode());
+        event.setPhone(request.getPhone());
+        event.setType(role.equals("ROLE_HOSPITAL")?"HOSPITAL":"INSURER");
+        event.setTenantId(tenantId);
+        kafkaProducerService.sendOrganizationUpdatevent(event);
+        return new ResponseEntity<>
+                (new ApiResponse("Organization Updated",true), HttpStatus.OK);
     }
 }

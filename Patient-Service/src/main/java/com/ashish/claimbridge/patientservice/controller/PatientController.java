@@ -1,6 +1,7 @@
 package com.ashish.claimbridge.patientservice.controller;
 
 import com.ashish.claimbridge.patientservice.dto.ApiResponse;
+import com.ashish.claimbridge.patientservice.dto.ClaimVerifyDto;
 import com.ashish.claimbridge.patientservice.dto.PatientDto;
 import com.ashish.claimbridge.patientservice.service.PatientService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,13 +28,15 @@ public class PatientController {
     }
 
     @GetMapping("/my-patients")
-    public ResponseEntity<List<PatientDto>> getAllPatients(@RequestHeader("tenantId")String tenantId) {
-         return   patientService.getPatientByTenantId(tenantId);
+    public ResponseEntity<List<PatientDto>> getAllPatients(@RequestHeader("tenantId")String tenantId,@RequestHeader("role")String role) {
+         return   patientService.getPatientByTenantId(tenantId,role);
 
     }
     @GetMapping("/get-patient/{id}")
-    public ResponseEntity<PatientDto> getPatientById(@PathVariable("id") Long id, @RequestHeader("tenantId") String tenantId) {
-       return  patientService.findById(id,tenantId);
+    public ResponseEntity<PatientDto> getPatientById(@PathVariable("id") Long id,
+                                                     @RequestHeader("tenantId") String tenantId,
+                                                     @RequestHeader("role")String role) {
+       return  patientService.findById(id,tenantId,role);
 
     }
     @PutMapping("/update-patent/{id}")
@@ -46,8 +49,20 @@ public class PatientController {
     }
 
     @PostMapping("/delete-patient/{id}")
-    public ResponseEntity<String> deletePatient(@PathVariable("id")Long id, @RequestHeader("tenantId") String tenantId) {
-       return  patientService.deleteById(id,tenantId);
+    public ResponseEntity<String> deletePatient(@PathVariable("id")Long id,
+                                                @RequestHeader("tenantId") String tenantId,
+                                                @RequestHeader("role")String role) {
+       return  patientService.deleteById(id,tenantId,role);
+
+    }
+
+    @PostMapping("/verify-claim/{id}")
+        public ResponseEntity<ApiResponse> verifyForClaim(
+                @PathVariable Long id,
+                @RequestBody ClaimVerifyDto claimVerifyDto,
+                @RequestHeader("role")String role,
+                @RequestHeader("tenantId")String tenantId){
+       return  patientService.verifyForClaim(id,claimVerifyDto,role,tenantId);
 
     }
 
