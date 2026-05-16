@@ -1,6 +1,7 @@
 package com.ashish.claimbridge.patientservice.mapper;
 
 import com.ashish.claimbridge.patientservice.dto.PatientDto;
+import com.ashish.claimbridge.patientservice.model.Gender;
 import com.ashish.claimbridge.patientservice.model.Patient;
 
 public class PatientDtoMapper {
@@ -9,7 +10,7 @@ public class PatientDtoMapper {
         patientDto.setFirstName(patient.getFirstName());
         patientDto.setLastName(patient.getLastName());
         patientDto.setEmail(patient.getEmail());
-        patientDto.setGender(patient.getGender());
+        patientDto.setGender((patient.getGender().name().toUpperCase()));
         patientDto.setDateOfBirth(patient.getDateOfBirth());
         patientDto.setMobileNumber(patient.getMobileNumber());
         patientDto.setInsuranceId(patient.getInsuranceId());

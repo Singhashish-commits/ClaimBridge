@@ -37,6 +37,7 @@ public class InsurancePolicyService {
        patientRepository.findByIdAndTenantId(dto.getPatientId(), tenantId)
                .orElseThrow(() -> new RuntimeException("Patient not found! for policy Enrollment!"));
 
+
        InsurencePolicy policy = new InsurencePolicy();
        policy.setPatientId(dto.getPatientId());
        policy.setInsurerId(dto.getInsurerId());
@@ -46,6 +47,7 @@ public class InsurancePolicyService {
        policy.setValidTo(dto.getValidTo());
        policy.setStatus(PolicyStatus.ACTIVE);
        policy.setTenantId(tenantId);
+       policy.setPolicyNumber(dto.getPolicyNumber());
        insurancePolicyRepository.save(policy);
        return new ResponseEntity<>
                ( new ApiResponse("Policy Enrolled Successfully",true), HttpStatus.ACCEPTED);
@@ -71,7 +73,7 @@ public class InsurancePolicyService {
         policy.setStatus(PolicyStatus.valueOf(status));
         insurancePolicyRepository.save(policy);
         return new ResponseEntity<>(
-                new ApiResponse("Updated Sucessfuly",true),HttpStatus.OK
+                new ApiResponse("Updated Successfully",true),HttpStatus.OK
         );
     }
     public ResponseEntity<InsurancePolicyDto> verifyPolicyForClaim(Long patientId, String tenantId, String insurerId) {

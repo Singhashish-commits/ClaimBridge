@@ -42,7 +42,7 @@ public class Patient {
     private String insuranceProvider;
 
     @Column(nullable = false,unique = true)
-    private String AadhaarId;
+    private String aadhaarId;
 
     private String address;
     private String city;

@@ -4,14 +4,14 @@ import com.ashish.claimbridge.patientservice.dto.ApiResponse;
 import com.ashish.claimbridge.patientservice.dto.ClaimVerifyDto;
 import com.ashish.claimbridge.patientservice.dto.PatientDto;
 import com.ashish.claimbridge.patientservice.mapper.PatientDtoMapper;
+import com.ashish.claimbridge.patientservice.model.Gender;
 import com.ashish.claimbridge.patientservice.model.Patient;
 import com.ashish.claimbridge.patientservice.repository.PatientRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestParam;
+
 
 import java.util.List;
 
@@ -45,11 +45,12 @@ public class PatientService {
         patient.setLastName(patientDto.getLastName());
         patient.setDateOfBirth(patientDto.getDateOfBirth());
         patient.setTenantId(tenantId); // added by the hospital Staff
-        patient.setGender(patientDto.getGender());
+        patient.setGender(Gender.valueOf(patientDto.getGender().toUpperCase()));
         patient.setEmail(patientDto.getEmail());
         patient.setMobileNumber(patientDto.getMobileNumber());
         patient.setInsuranceId(patientDto.getInsuranceId());
         patient.setInsuranceProvider(patientDto.getInsuranceProvider());
+        patient.setAadhaarId(patientDto.getAadhaarId());
         return patient;
     }
 
@@ -85,7 +86,7 @@ public class PatientService {
         current.setFirstName(patientDto.getFirstName());
         current.setLastName(patientDto.getLastName());
         current.setEmail(patientDto.getEmail());
-        current.setGender(patientDto.getGender());
+        current.setGender(Gender.valueOf(patientDto.getGender()));
         current.setMobileNumber(patientDto.getMobileNumber());
         current.setInsuranceId(patientDto.getInsuranceId());
         current.setInsuranceProvider(patientDto.getInsuranceProvider());

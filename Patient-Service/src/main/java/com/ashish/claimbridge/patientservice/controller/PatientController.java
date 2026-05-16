@@ -24,6 +24,7 @@ public class PatientController {
                                                  @RequestHeader("tenantId")  String tenantId,
                                                  @RequestHeader("role") String role,
                                                  @RequestHeader("email") String email) {
+        System.out.println("Request Received here ");
             return patientService.savePatient(patient,role,tenantId);
     }
 

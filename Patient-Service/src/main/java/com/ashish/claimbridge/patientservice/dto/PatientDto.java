@@ -16,13 +16,12 @@ public class PatientDto {
     private String firstName;
     private String lastName;
     private LocalDate dateOfBirth;
-    @Enumerated(EnumType.STRING)
-    private Gender gender;
+    private String gender;
     private String mobileNumber;
     private String email;
     private String insuranceId;
     private String insuranceProvider;
-    private String AadhaarId;
+    private String aadhaarId;
     private String address;
     private String city;
     private String state;
