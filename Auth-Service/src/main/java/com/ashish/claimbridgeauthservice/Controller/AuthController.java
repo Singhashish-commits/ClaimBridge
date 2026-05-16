@@ -32,7 +32,7 @@ public class AuthController {
 
     }
     @PostMapping("/create-staff")
-    public ResponseEntity<ApiResponse> createStaff(@RequestBody SignUpRequest signUpRequest,
+    public ResponseEntity<ApiResponse> createStaff(@RequestBody CreateUser signUpRequest,
                                                    @RequestHeader("tenantId") String tenantId,
                                                    @RequestHeader("role") String role){
 

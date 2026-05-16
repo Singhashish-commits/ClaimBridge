@@ -109,17 +109,17 @@ public class AuthService {
     }
 
 
-    public ResponseEntity<ApiResponse> createStaff(SignUpRequest signUpRequest, String tenantId, String role) {
+    public ResponseEntity<ApiResponse> createStaff(CreateUser request, String tenantId, String role) {
         if(!role.equals("ROLE_HOSPITAL") &&!role.equals("ROLE_INSURER")) {
             throw new RuntimeException("Unauthorized !!");
         }
         String staffRole = role.equals("ROLE_HOSPITAL") ? "ROLE_HOSPITAL_USER" : "ROLE_INSURER_USER";
         User staff = new User();
-        staff.setEmail(signUpRequest.getEmail());
+        staff.setEmail(request.getEmail());
         staff.setPassword(passwordEncoder.encode("Welocome@123"));
         staff.setTenantId(tenantId);
-        staff.setOrganizationName(signUpRequest.getOrganizationName());
-        staff.setName(signUpRequest.getName());
+        staff.setOrganizationName(request.getOrganizationName());
+        staff.setName(request.getName());
         staff.setRole(Role.valueOf(staffRole));
         userRepo.save(staff);
         return new ResponseEntity<>
