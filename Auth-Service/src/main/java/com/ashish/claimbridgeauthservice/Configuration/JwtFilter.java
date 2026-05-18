@@ -39,24 +39,20 @@ public class JwtFilter extends OncePerRequestFilter {
         }
 
 
-        // Get the path of the current request
         String path = request.getServletPath();
 
-        // If the path is for auth, skip the filter and let the controller handle it
         if (path.startsWith("/api/auth/")) {
             filterChain.doFilter(request, response);
             return;
         }
-// request have many header  from which we need the header Authorization
         String authHeader = request.getHeader("Authorization");
         String token = null;
         String userName = null;
 
         if(authHeader != null && authHeader.startsWith("Bearer ")){
-            token = authHeader.substring(7); // Skip the fist string "Bearer";
-            userName = jwtService.extractUserName(token); // Extract Username from the token written in JwtService
+            token = authHeader.substring(7);
+            userName = jwtService.extractUserName(token);
         }
-//          if the username is not null from the token and is not already authenticated,authenticate it
         if(userName != null && SecurityContextHolder.getContext().getAuthentication()==null){
 
             UserDetails userDetails = context.getBean(MyUserDetailService.class).loadUserByUsername(userName);
@@ -64,10 +60,7 @@ public class JwtFilter extends OncePerRequestFilter {
             if(jwtService.validateToken(token, userDetails)){
                 UsernamePasswordAuthenticationToken authToken =
                         new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
-                // Asked three things in the token principle ,credentials and the Authorities
                 authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-                // webAuthenticationDetailSource is a spring helper class that extract detail from the HttpServletRequest
-                //Builds a WebAuthenticationDetails object
                 SecurityContextHolder.getContext().setAuthentication(authToken);
             }
         }

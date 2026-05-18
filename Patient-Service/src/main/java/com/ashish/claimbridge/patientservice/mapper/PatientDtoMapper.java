@@ -1,7 +1,6 @@
 package com.ashish.claimbridge.patientservice.mapper;
 
 import com.ashish.claimbridge.patientservice.dto.PatientDto;
-import com.ashish.claimbridge.patientservice.model.Gender;
 import com.ashish.claimbridge.patientservice.model.Patient;
 
 public class PatientDtoMapper {

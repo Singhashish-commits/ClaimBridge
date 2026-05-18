@@ -1,6 +1,5 @@
 package com.ashish.claimbridge.prescriptionservice.repository;
 
-import com.ashish.claimbridge.prescriptionservice.dto.PrescriptionDto;
 import com.ashish.claimbridge.prescriptionservice.model.Prescription;
 import org.springframework.data.jpa.repository.JpaRepository;
 

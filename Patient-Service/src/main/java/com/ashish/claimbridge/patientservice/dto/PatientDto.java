@@ -1,8 +1,5 @@
 package com.ashish.claimbridge.patientservice.dto;
 
-import com.ashish.claimbridge.patientservice.model.Gender;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
