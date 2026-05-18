@@ -128,7 +128,6 @@ public class PatientService {
             patient.setInsuranceVerified(true);
             patientRepository.save(patient);
         }
-//        PatientDto patientDto = PatientDtoMapper.mapPatientEntityToPatientDto(patient);
         return new ResponseEntity<>(new ApiResponse("Patient Verified Successfully",true),HttpStatus.OK);
     }
 }
