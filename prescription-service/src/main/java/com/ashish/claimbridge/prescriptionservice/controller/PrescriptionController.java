@@ -25,13 +25,13 @@ public class PrescriptionController {
                                                          @RequestHeader("email")String email) {
         return prescriptionService.createPrescription(dto,tenantId,role,email);
     }
-        @GetMapping("{id}")
+        @GetMapping("/{id}")
     public ResponseEntity<List<PrescriptionDto>> getPrescriptionsByPatientId(@PathVariable Long id,
                                                                      @RequestHeader("tenantId")String tenantId,
                                                                      @RequestHeader("role")String role){
             return prescriptionService.getPrescriptionsByPatientId(id,tenantId,role);
         }
-        @GetMapping("prescription/{id}")
+        @GetMapping("/prescription/{id}")
 public ResponseEntity<PrescriptionDto> getPrescriptionById(@PathVariable Long id,
                                                            @RequestHeader("tenantId")String tenantId,
                                                           @RequestHeader("role")String role){
@@ -47,6 +47,7 @@ public ResponseEntity<PrescriptionDto> getPrescriptionById(@PathVariable Long id
         return prescriptionService.dispense(id,tenantId,role);
 }
 
+@GetMapping("/validate/{id}")
 public ResponseEntity<PrescriptionDto> validateForClaim(@PathVariable Long id,
                                                     @RequestHeader("tenantId")String tenantId,
                                                     @RequestHeader("role")String role){

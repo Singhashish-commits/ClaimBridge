@@ -12,33 +12,20 @@ import lombok.NoArgsConstructor;
 
 public class ClaimItem {
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     private String itemName;
-
     @Enumerated(EnumType.STRING)
-    private BillItemCategory category; // bill item category and claim item category are same
-
+    private BillItemCategory category;
     private Integer quantity;
-
     private Double totalPrice;
-
     private Boolean claimable;
-
     private Double approvedAmount;
-
     private Double rejectedAmount;
-
     private String rejectionReason;
-
-    @Enumerated(EnumType.STRING)
-    private ClaimItemStatus status;
-
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "claim_id")
     private Claim claim;
 
-    @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "bill_item_id")
-    private BillItem billItem;
+
 }

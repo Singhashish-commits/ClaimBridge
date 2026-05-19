@@ -16,41 +16,35 @@ import java.util.List;
 @NoArgsConstructor
 public class Claim {
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
-    private String id;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
     private String claimNumber;
-
     private Long patientId;
-
     private Long insurancePolicyId;
-
     private Double totalClaimAmount;
-
     private Double approvedAmount;
-
     private Double rejectedAmount;
-
-    @Enumerated(EnumType.STRING)
-    private ClaimType claimType;
-
     @Enumerated(EnumType.STRING)
     private ClaimStatus status;
-
     private String diagnosis;
-
     private String remarks;
-
     private LocalDateTime submittedAt;
-
-    @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "hospital_bill_id")
-    private HospitalBill hospitalBill;
-
     @OneToMany(mappedBy = "claim",
             cascade = CascadeType.ALL,
             orphanRemoval = true)
     private List<ClaimItem> claimItems;
+    private String hospitalId;
+    private String insurerId;
+    private Long prescriptionId;
 
+
+    public void addClaimItem(ClaimItem item) {
+        if (claimItems == null) {
+            this.claimItems = new ArrayList<>();
+        }
+        this.claimItems.add(item);
+        item.setClaim(this);
+    }
 
 
 }
