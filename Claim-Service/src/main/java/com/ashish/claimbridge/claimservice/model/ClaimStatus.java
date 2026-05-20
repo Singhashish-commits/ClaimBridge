@@ -8,5 +8,6 @@ public enum ClaimStatus {
     APPROVED,
     PARTIALLY_APPROVED,
     REJECTED,
-    SETTLED
+    SETTLED,
+    CANCELLED,
 }

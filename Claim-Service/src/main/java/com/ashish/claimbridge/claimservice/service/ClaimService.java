@@ -1,9 +1,9 @@
 package com.ashish.claimbridge.claimservice.service;
 
-import com.ashish.claimbridge.claimservice.dto.ApiResponse;
-import com.ashish.claimbridge.claimservice.dto.ClaimSubmitDto;
+import com.ashish.claimbridge.claimservice.dto.*;
 import com.ashish.claimbridge.claimservice.feignClient.PatientClient;
 import com.ashish.claimbridge.claimservice.feignClient.PrescriptionClient;
+import com.ashish.claimbridge.claimservice.mapper.dtoMapper;
 import com.ashish.claimbridge.claimservice.model.Claim;
 import com.ashish.claimbridge.claimservice.model.ClaimItem;
 import com.ashish.claimbridge.claimservice.model.ClaimStatus;
@@ -85,33 +85,38 @@ public class ClaimService {
 
     }
 
-    public ResponseEntity< Claim> getClaimById(Long id, String tenantId, String role){
+    public ResponseEntity<ClaimResponse> getClaimById(Long id, String tenantId, String role){
        Claim claim = claimRepository.findById(id)
                .orElseThrow(()-> new RuntimeException("Claim not find with the id "+id));
 
-       if(role.equals("ROLE_HOSPITAL")||role.equals("ROLE_HOSPITAL_USER")){
+       if(role.equals("ROLE_HOSPITAL") || role.equals("ROLE_HOSPITAL_USER")){
            if(!claim.getHospitalId().equals(tenantId)){
                 throw new RuntimeException("Unauthorized !!");
            }
        }
-       if(!role.equals("ROLE_INSURER")|| role.equals("ROLE_INSURER_USER")){
+       if(role.equals("ROLE_INSURER")|| role.equals("ROLE_INSURER_USER")){
            if(!claim.getInsurerId().equals(tenantId)){
                throw new RuntimeException("Unauthorized !!");
            }
        }
-       return  new ResponseEntity<>(claim, HttpStatus.OK);
+       ClaimResponse claimResponse = dtoMapper.mapDto(claim);
+       return  new ResponseEntity<>(claimResponse, HttpStatus.OK);
     }
-    public ResponseEntity<List<Claim>> getClaimByHospitalId(Long id, String tenantId, String role){
+    public ResponseEntity<List<ClaimResponse>> getClaimByHospitalId(Long id, String tenantId, String role){
         if(!role.equals("ROLE_HOSPITAL") && !role.equals("ROLE_HOSPITAL_USER")){
             throw new RuntimeException("Unauthorized !!");
         }
 
         List<Claim> claims = claimRepository.findByHospitalId(tenantId)
                 .orElseThrow(()-> new RuntimeException("Claim not find ofr the Hospital with Id "+id));
-        return   new ResponseEntity<>(claims, HttpStatus.OK);
+
+        List<ClaimResponse> response = claims.stream()
+                .map(claim -> dtoMapper.mapDto(claim))
+                .toList();
+        return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
-    public ResponseEntity<List<Claim>> getClaimByStatus(ClaimStatus status, String tenantId, String role){
+    public ResponseEntity<List<ClaimResponse>> getClaimByStatus(ClaimStatus status, String tenantId, String role){
         List<Claim> claims;
         if(role.equals("ROLE_HOSPITAL")||role.equals("ROLE_HOSPITAL_USER")){
             claims = claimRepository.findByStatusAndHospitalId(status,tenantId)
@@ -126,8 +131,102 @@ public class ClaimService {
             throw new RuntimeException("Unauthorized to check claims!! ");
         }
 
-
-        return new ResponseEntity<>(claims, HttpStatus.OK);
+        List<ClaimResponse> response = claims.stream()
+                .map(claim -> dtoMapper.mapDto(claim))
+                .toList();
+        return new ResponseEntity<>(response, HttpStatus.OK);
     }
+
+    public ResponseEntity<ApiResponse> approveClaim( Long id, ClaimApproveDto dto,
+                                                     String tenantId, String role){
+        if(!role.equals("ROLE_INSURER")&& !role.equals("ROLE_INSURER_USER")){
+            throw new RuntimeException("Unauthorized  to Settle claim !!");
+        }
+        Claim claim = claimRepository.findById(id)
+                .orElseThrow(()-> new RuntimeException("Claim not found with the id "+id));
+        if(!claim.getInsurerId().equals(tenantId)){
+            throw new RuntimeException("not Authorized to Settle claim !!");
+        }
+        if(!claim.getStatus().equals(ClaimStatus.SUBMITTED)){
+            throw new RuntimeException("Claim cant be approved at this stage");
+        }
+        if(dto.getItemApprovals()!=null){
+            for(ClaimItemApproveDto itemDto : dto.getItemApprovals()){
+                ClaimItem item= claim.getClaimItems().stream()
+                        .filter(i->i.getId().equals(itemDto.getClaimItemId()))
+                        .findFirst().orElseThrow(()-> new RuntimeException("ClaimItem not found with the id "+itemDto.getClaimItemId()));
+                item.setApprovedAmount(itemDto.getApprovedAmount()); // approved Amount
+                double Rejected = item.getTotalPrice()-item.getApprovedAmount();
+                item.setRejectedAmount(Rejected); // rejected Amount
+                if(item.getRejectionReason()!=null){
+                    item.setRejectionReason(item.getRejectionReason());
+                }
+            }
+        }
+        double totalApprove = claim.getClaimItems().stream()
+                .mapToDouble(i-> i.getApprovedAmount()!=null? i.getApprovedAmount():0.0 )
+                .sum();
+        double totalRejected = claim.getTotalClaimAmount()-totalApprove;
+
+        claim.setApprovedAmount(totalApprove);
+        claim.setRejectedAmount(totalRejected);
+        claim.setRemarks(claim.getRemarks());
+        if(totalRejected>0){
+            claim.setStatus(ClaimStatus.PARTIALLY_APPROVED);
+        }
+        else{
+            claim.setStatus(ClaimStatus.APPROVED);
+        }
+        claimRepository.save(claim);
+        return new ResponseEntity<>(new ApiResponse("Claim Approved Successfully",true), HttpStatus.OK);
+    }
+
+
+    public ResponseEntity<ApiResponse> rejectClaimById(Long id, String tenantId, String role,String reason){
+        if(!role.equals("ROLE_INSURER") &&  !role.equals("ROLE_INSURER_USER")){
+            throw new RuntimeException("Unauthorized  to  Reject Claim  !!");
+        }
+        Claim claim = claimRepository.findById(id)
+                .orElseThrow(()-> new RuntimeException("Claim not found with the id "+id));
+        if(!claim.getInsurerId().equals(tenantId)){
+            throw new RuntimeException("the claim doesnt belong to this Insurance Company!!");
+
+        }
+        if(!claim.getStatus().equals(ClaimStatus.SUBMITTED) &&
+                !claim.getStatus().equals(ClaimStatus.UNDER_REVIEW) &&
+                !claim.getStatus().equals(ClaimStatus.PRE_APPROVED)){
+           throw new RuntimeException("Claim can't be rejected at this stage");
+        }
+        claim.setRemarks(reason);
+        claim.setStatus(ClaimStatus.REJECTED);
+        claim.setApprovedAmount(0.0);
+        claim.setRejectedAmount(claim.getTotalClaimAmount());
+        claimRepository.save(claim);
+        return new ResponseEntity<>(new ApiResponse("Claim Rejected",true), HttpStatus.OK);
+    }
+
+
+    public ResponseEntity<ApiResponse>cancelClaimById( Long id, String tenantId, String role,String reason){
+        if(!role.equals("ROLE_HOSPITAL") && !role.equals("ROLE_HOSPITAL_USER")){
+            throw new RuntimeException("Unauthorized  to  Cancel Claim  !!");
+        }
+        Claim claim = claimRepository.findById(id)
+                .orElseThrow(()-> new RuntimeException("Claim not found with the id "+id));
+        if(!claim.getHospitalId().equals(tenantId)){
+            throw new RuntimeException("the claim doesnt belong to this Hospital !!");
+        }
+        if(!claim.getStatus().equals(ClaimStatus.DRAFT) && !claim.getStatus().equals(ClaimStatus.SUBMITTED) &&
+        !claim.getStatus().equals(ClaimStatus.UNDER_REVIEW)){
+            throw new RuntimeException("Claim cant be cancelled at this stage");
+        }
+        claim.setStatus(ClaimStatus.CANCELLED);
+        claim.setApprovedAmount(0.0);
+        claim.setRejectedAmount(claim.getTotalClaimAmount());
+        claim.setRemarks(reason);
+        claimRepository.save(claim);
+        return new ResponseEntity<>(new ApiResponse("Claim Cancelled",true), HttpStatus.OK);
+
+    }
+
 
 }
