@@ -1,6 +1,7 @@
 package com.ashish.claimbridge.claimservice.repository;
 
 import com.ashish.claimbridge.claimservice.model.Claim;
+import com.ashish.claimbridge.claimservice.model.ClaimHistory;
 import com.ashish.claimbridge.claimservice.model.ClaimStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 
@@ -20,4 +21,5 @@ public interface ClaimRepository extends JpaRepository<Claim, Long> {
     Optional<List<Claim>> findByStatusAndHospitalId(ClaimStatus status, String tenantId);
 
     Optional<List<Claim>> findByStatusAndInsurerId(ClaimStatus status, String insurerId);
+
 }

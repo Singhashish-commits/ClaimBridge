@@ -1,12 +1,9 @@
 package com.ashish.claimbridge.claimservice.controller;
 
-import com.ashish.claimbridge.claimservice.dto.ApiResponse;
-import com.ashish.claimbridge.claimservice.dto.ClaimApproveDto;
-import com.ashish.claimbridge.claimservice.dto.ClaimResponse;
-import com.ashish.claimbridge.claimservice.dto.ClaimSubmitDto;
+import com.ashish.claimbridge.claimservice.dto.*;
+import com.ashish.claimbridge.claimservice.model.ClaimHistory;
 import com.ashish.claimbridge.claimservice.model.ClaimStatus;
 import com.ashish.claimbridge.claimservice.service.ClaimService;
-import jakarta.ws.rs.Path;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -45,16 +42,51 @@ public class ClaimController {
     }
     @GetMapping("/status/{status}")
     public ResponseEntity<List<ClaimResponse>> getClaimByStatus(@PathVariable ClaimStatus status,
-                                                                 @RequestHeader("tenatId")String tenantId,
+                                                                 @RequestHeader("tenantId")String tenantId,
                                                                  @RequestHeader("role")String role){
         return claimService.getClaimByStatus(status,tenantId,role);
     }
     @PatchMapping("/approve/{id}")
     public ResponseEntity<ApiResponse> approveClaim(@PathVariable("id")Long id,@RequestHeader("tenantId")String tenantId,
                                                     @RequestHeader("role")String role,
-                                                    @RequestBody  ClaimApproveDto claimApproveDto){
-        return claimService.approveClaim(id, claimApproveDto,tenantId,role);
+                                                    @RequestBody  ClaimApproveDto claimApproveDto,
+                                                    @RequestHeader("email") String email){
+        return claimService.approveClaim(id, claimApproveDto,tenantId,role,email);
     }
+
+    @PatchMapping("/{id}/reject")
+    public ResponseEntity<ApiResponse> rejectClaim(
+            @PathVariable Long id,
+            @RequestHeader("tenantId") String tenantId,
+            @RequestHeader("role") String role,
+            @RequestParam String reason) {
+        return claimService.rejectClaimById(id, tenantId, role, reason);
+    }
+
+    @PatchMapping("/{id}/cancel")
+    public ResponseEntity<ApiResponse> cancelClaim(
+            @PathVariable Long id,
+            @RequestHeader("tenantId") String tenantId,
+            @RequestHeader("role") String role,
+            @RequestParam String reason) {
+        return claimService.cancelClaimById(id, tenantId, role, reason);
+    }
+
+    @GetMapping("/{id}/history")
+    public ResponseEntity<List<ClaimHistoryDto>> getClaimHistory(
+            @PathVariable Long id,
+            @RequestHeader("tenantId")String tenantId,
+            @RequestHeader("role")String role) {
+        return claimService.getClaimHistory(id, tenantId, role);
+    }
+
+
+//    @GetMapping("/stats")
+//    public ResponseEntity<ClaimStatsDto> getStats(
+//            @RequestHeader("tenantId") String tenantId,
+//            @RequestHeader("role") String role) {
+//        return claimService.getClaimStats(tenantId, role);
+//    }
 
 
 

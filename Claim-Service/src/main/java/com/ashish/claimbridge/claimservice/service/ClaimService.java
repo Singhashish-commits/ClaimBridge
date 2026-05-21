@@ -3,10 +3,13 @@ package com.ashish.claimbridge.claimservice.service;
 import com.ashish.claimbridge.claimservice.dto.*;
 import com.ashish.claimbridge.claimservice.feignClient.PatientClient;
 import com.ashish.claimbridge.claimservice.feignClient.PrescriptionClient;
+import com.ashish.claimbridge.claimservice.mapper.ClaimHistoryDtoMapper;
 import com.ashish.claimbridge.claimservice.mapper.dtoMapper;
 import com.ashish.claimbridge.claimservice.model.Claim;
+import com.ashish.claimbridge.claimservice.model.ClaimHistory;
 import com.ashish.claimbridge.claimservice.model.ClaimItem;
 import com.ashish.claimbridge.claimservice.model.ClaimStatus;
+import com.ashish.claimbridge.claimservice.repository.ClaimHistoryRepo;
 import com.ashish.claimbridge.claimservice.repository.ClaimRepository;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -23,11 +26,15 @@ public class ClaimService {
     private final ClaimRepository claimRepository;
     private final PatientClient patientClient;
     private final PrescriptionClient prescriptionClient;
+    private final KafkaProducerService kafkaProducerService;
+    private final ClaimHistoryRepo claimHistoryRepo;
 
-    public ClaimService(ClaimRepository claimRepository, PatientClient patientClient, PrescriptionClient prescriptionClient) {
+    public ClaimService(ClaimRepository claimRepository, PatientClient patientClient, PrescriptionClient prescriptionClient, KafkaProducerService kafkaProducerService, ClaimHistoryRepo claimHistoryRepo) {
         this.claimRepository = claimRepository;
         this.patientClient = patientClient;
         this.prescriptionClient = prescriptionClient;
+        this.kafkaProducerService = kafkaProducerService;
+        this.claimHistoryRepo = claimHistoryRepo;
     }
 
     public ResponseEntity<ApiResponse> submitClaim(ClaimSubmitDto claimSubmitDto, String tenantId, String role, String email) {
@@ -80,6 +87,13 @@ public class ClaimService {
             }
         }
         Claim savedClaim = claimRepository.save(claim);
+        kafkaProducerService.sendFraudCheckEvent(
+                savedClaim.getId(),
+                savedClaim.getPatientId(),
+                savedClaim.getTotalClaimAmount(),
+                tenantId
+        );
+        saveHistory(savedClaim.getId(),ClaimStatus.DRAFT.toString(),ClaimStatus.SUBMITTED.toString(),email,"ClaimHistory Saved");
 
         return new ResponseEntity<>( new ApiResponse("Claim Submitted Successfully",true), HttpStatus.OK);
 
@@ -138,7 +152,7 @@ public class ClaimService {
     }
 
     public ResponseEntity<ApiResponse> approveClaim( Long id, ClaimApproveDto dto,
-                                                     String tenantId, String role){
+                                                     String tenantId, String role,String email){
         if(!role.equals("ROLE_INSURER")&& !role.equals("ROLE_INSURER_USER")){
             throw new RuntimeException("Unauthorized  to Settle claim !!");
         }
@@ -158,7 +172,7 @@ public class ClaimService {
                 item.setApprovedAmount(itemDto.getApprovedAmount()); // approved Amount
                 double Rejected = item.getTotalPrice()-item.getApprovedAmount();
                 item.setRejectedAmount(Rejected); // rejected Amount
-                if(item.getRejectionReason()!=null){
+                if(itemDto.getRejectionReason()!=null){
                     item.setRejectionReason(item.getRejectionReason());
                 }
             }
@@ -178,6 +192,7 @@ public class ClaimService {
             claim.setStatus(ClaimStatus.APPROVED);
         }
         claimRepository.save(claim);
+        saveHistory(claim.getId(),ClaimStatus.SUBMITTED.toString(), ClaimStatus.APPROVED.toString(),email,"Form Submitted to approve");
         return new ResponseEntity<>(new ApiResponse("Claim Approved Successfully",true), HttpStatus.OK);
     }
 
@@ -228,5 +243,33 @@ public class ClaimService {
 
     }
 
+    public ResponseEntity<List<ClaimHistoryDto>> getClaimHistory(Long id, String tenantId, String role){
+        List<ClaimHistory> historyList= claimHistoryRepo.findByClaimId(id)
+                .orElseThrow(()->new RuntimeException("Claim History  not found"));
+
+
+        List<ClaimHistoryDto> list =
+                historyList.stream()
+                        .map(ClaimHistoryDtoMapper::mapdto)
+                        .toList();
+        return  new ResponseEntity<>(list,HttpStatus.OK);
+    }
+
+
+    private void saveHistory(Long claimId, String from, String to, String by, String notes) {
+        ClaimHistory history = new ClaimHistory();
+        history.setClaimId(claimId);
+        history.setFromState(from);
+        history.setToState(to);
+        history.setTriggeredBy(by);
+        history.setNotes(notes);
+        history.setTimestamp(LocalDateTime.now());
+        claimHistoryRepo.save(history);
+    }
+
+
 
 }
+
+
+
