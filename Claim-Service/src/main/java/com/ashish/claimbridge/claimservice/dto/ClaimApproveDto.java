@@ -12,6 +12,5 @@ import java.util.List;
 public class ClaimApproveDto {
     private double approvedAmount;
     private String remark;
-
     private List<ClaimItemApproveDto> itemApprovals;
 }

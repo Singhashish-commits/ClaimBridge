@@ -10,16 +10,15 @@ import java.util.Optional;
 
 public interface ClaimRepository extends JpaRepository<Claim, Long> {
 
-    Optional<List<Claim>> findByHospitalId(String hospitalId);
+    List<Claim> findByHospitalId(String hospitalId);
     Optional<Claim> findByIdAndHospitalId(Long id, String hospitalId);
     List<Claim> findByInsurerId(String insurerId);
     List<Claim> findByInsurerIdAndStatus(String insurerId, ClaimStatus status);
     Optional<Claim> findByIdAndInsurerId(Long id, String insurerId);
 
-    boolean existsByPrescriptionIdAndStatusNot(Long prescriptionId, ClaimStatus status);
+    List<Claim> findByStatusAndHospitalId(ClaimStatus status, String tenantId);
 
-    Optional<List<Claim>> findByStatusAndHospitalId(ClaimStatus status, String tenantId);
+   List<Claim> findByStatusAndInsurerId(ClaimStatus status, String insurerId);
 
-    Optional<List<Claim>> findByStatusAndInsurerId(ClaimStatus status, String insurerId);
-
+    boolean existsByPrescriptionIdAndStatusNotIn(Long prescriptionId, List<ClaimStatus> rejected);
 }

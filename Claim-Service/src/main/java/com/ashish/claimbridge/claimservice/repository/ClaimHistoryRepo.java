@@ -10,5 +10,5 @@ import java.util.Optional;
 
 @Repository
 public interface ClaimHistoryRepo extends JpaRepository<ClaimHistory, Long> {
-    Optional<List<ClaimHistory>> findByClaimId(Long claimId);
+  List<ClaimHistory> findByClaimId(Long claimId);
 }

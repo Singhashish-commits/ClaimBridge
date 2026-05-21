@@ -1,10 +1,10 @@
 package com.ashish.claimbridge.claimservice.controller;
 
 import com.ashish.claimbridge.claimservice.dto.*;
-import com.ashish.claimbridge.claimservice.model.ClaimHistory;
 import com.ashish.claimbridge.claimservice.model.ClaimStatus;
 import com.ashish.claimbridge.claimservice.service.ClaimService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -23,35 +23,36 @@ public class ClaimController {
             @RequestBody  ClaimSubmitDto claimSubmitDto,
             @RequestHeader("tenantId")String tenantId,@RequestHeader("role")String role,
             @RequestHeader("email")String email){
-     return    claimService.submitClaim(claimSubmitDto,tenantId,role,email);
+     ApiResponse respone = claimService.submitClaim(claimSubmitDto,tenantId,role,email);
+     return ResponseEntity.status(HttpStatus.CREATED).body(respone);
     }
     @GetMapping("/{id}")
     public ResponseEntity<ClaimResponse> getClaimById(@PathVariable("id")Long id,
                                                       @RequestHeader("tenantId")String tenantId,
                                                       @RequestHeader("role")String role){
-       return  claimService.getClaimById(id,tenantId,role);
+
+       return ResponseEntity.ok(claimService.getClaimById(id,tenantId,role));
 
     }
 
-    @GetMapping("/hospital/{id}")
-    public ResponseEntity<List<ClaimResponse>> getClaimByHospitalId(@PathVariable("id")Long id,
-                                                                    @RequestHeader("tenantId")String tenantId,
+    @GetMapping("/hospital")
+    public ResponseEntity<List<ClaimResponse>> getClaimByHospitalId(@RequestHeader("tenantId")String tenantId,
                                                                     @RequestHeader("role")String role){
-        return claimService.getClaimByHospitalId(id,tenantId,role);
+        return ResponseEntity.ok(claimService.getClaimByHospitalId(tenantId,role));
 
     }
     @GetMapping("/status/{status}")
     public ResponseEntity<List<ClaimResponse>> getClaimByStatus(@PathVariable ClaimStatus status,
                                                                  @RequestHeader("tenantId")String tenantId,
                                                                  @RequestHeader("role")String role){
-        return claimService.getClaimByStatus(status,tenantId,role);
+        return ResponseEntity.ok(claimService.getClaimByStatus(status,tenantId,role));
     }
     @PatchMapping("/approve/{id}")
     public ResponseEntity<ApiResponse> approveClaim(@PathVariable("id")Long id,@RequestHeader("tenantId")String tenantId,
                                                     @RequestHeader("role")String role,
                                                     @RequestBody  ClaimApproveDto claimApproveDto,
                                                     @RequestHeader("email") String email){
-        return claimService.approveClaim(id, claimApproveDto,tenantId,role,email);
+        return ResponseEntity.ok(claimService.approveClaim(id, claimApproveDto,tenantId,role,email));
     }
 
     @PatchMapping("/{id}/reject")
@@ -59,8 +60,9 @@ public class ClaimController {
             @PathVariable Long id,
             @RequestHeader("tenantId") String tenantId,
             @RequestHeader("role") String role,
-            @RequestParam String reason) {
-        return claimService.rejectClaimById(id, tenantId, role, reason);
+            @RequestParam String reason,
+            @RequestHeader("email")String email) {
+        return ResponseEntity.ok(claimService.rejectClaimById(id, tenantId, role, reason,email));
     }
 
     @PatchMapping("/{id}/cancel")
@@ -68,8 +70,9 @@ public class ClaimController {
             @PathVariable Long id,
             @RequestHeader("tenantId") String tenantId,
             @RequestHeader("role") String role,
-            @RequestParam String reason) {
-        return claimService.cancelClaimById(id, tenantId, role, reason);
+            @RequestParam String reason,
+            @RequestHeader("email")String email) {
+        return ResponseEntity.ok(claimService.cancelClaimById(id, tenantId, role, reason,email));
     }
 
     @GetMapping("/{id}/history")
@@ -77,7 +80,7 @@ public class ClaimController {
             @PathVariable Long id,
             @RequestHeader("tenantId")String tenantId,
             @RequestHeader("role")String role) {
-        return claimService.getClaimHistory(id, tenantId, role);
+        return ResponseEntity.ok(claimService.getClaimHistory(id,tenantId,role));
     }
 
 

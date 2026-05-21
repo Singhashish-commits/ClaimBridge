@@ -4,7 +4,7 @@ import com.ashish.claimbridge.claimservice.dto.ClaimHistoryDto;
 import com.ashish.claimbridge.claimservice.model.ClaimHistory;
 
 public class ClaimHistoryDtoMapper {
-    static public ClaimHistoryDto mapdto(ClaimHistory claimHistory) {
+    static public ClaimHistoryDto mapDto(ClaimHistory claimHistory) {
         ClaimHistoryDto dto = new ClaimHistoryDto();
         dto.setFromState(claimHistory.getFromState());
         dto.setToState(claimHistory.getToState());

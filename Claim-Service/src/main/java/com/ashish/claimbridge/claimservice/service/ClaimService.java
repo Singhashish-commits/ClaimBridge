@@ -11,8 +11,9 @@ import com.ashish.claimbridge.claimservice.model.ClaimItem;
 import com.ashish.claimbridge.claimservice.model.ClaimStatus;
 import com.ashish.claimbridge.claimservice.repository.ClaimHistoryRepo;
 import com.ashish.claimbridge.claimservice.repository.ClaimRepository;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+import feign.FeignException;
+import jakarta.persistence.EntityNotFoundException;
+import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -36,31 +37,43 @@ public class ClaimService {
         this.kafkaProducerService = kafkaProducerService;
         this.claimHistoryRepo = claimHistoryRepo;
     }
-
-    public ResponseEntity<ApiResponse> submitClaim(ClaimSubmitDto claimSubmitDto, String tenantId, String role, String email) {
+    @Transactional
+    public ApiResponse submitClaim(ClaimSubmitDto claimSubmitDto, String tenantId, String role, String email) {
         if(!role.equals("ROLE_HOSPITAL") && !role.equals("ROLE_HOSPITAL_USER")){
-            throw new RuntimeException("not Authorized to submit claim");
+            throw new IllegalArgumentException("not Authorized to submit claim");
         }
         boolean billAlreadyExists = claimRepository
-                .existsByPrescriptionIdAndStatusNot(claimSubmitDto.getPrescriptionId(),ClaimStatus.REJECTED);
+                .existsByPrescriptionIdAndStatusNotIn(claimSubmitDto.getPrescriptionId(),List.of(
+                        ClaimStatus.REJECTED,
+                        ClaimStatus.CANCELLED
+                ));
         if (billAlreadyExists) {
             throw new IllegalStateException("A claim has already been submitted for this prescription bill.");
         }
         try{
            patientClient.getPatientById(claimSubmitDto.getPatientId(), tenantId, role);
-        }catch(Exception e){
-            throw new RuntimeException("patient not find or unAuthorized to get patient for claim Submission");
+        }catch(FeignException.NotFound ex){
+            throw new EntityNotFoundException("Patient does not exist in the system.");
         }
+        catch(FeignException ex){
+            throw new RuntimeException("Error communicating with Patient Service: " + ex.getMessage());
+        }
+
         try{
             prescriptionClient.validateForClaim(claimSubmitDto.getPrescriptionId(), tenantId, role);
-        }catch(Exception e){
+        }catch(FeignException.NotFound ex){
             throw new RuntimeException("Prescription Invalid or Expired for claim Submission");
         }
+        catch(FeignException ex){
+            throw new RuntimeException("Error communicating with Prescription Service: " + ex.getMessage());
+        }
+
         Claim claim = new Claim();
         claim.setClaimNumber(UUID.randomUUID() + "-" + claimSubmitDto.getPatientId() + "-" + claimSubmitDto.getPrescriptionId());
         claim.setPatientId(claimSubmitDto.getPatientId());
         claim.setInsurancePolicyId(claimSubmitDto.getInsurancePolicyId());
         claim.setPrescriptionId(claimSubmitDto.getPrescriptionId());
+        if(claimSubmitDto.getTotalClaimAmount() <= 0) throw new IllegalStateException("Claim Amount must be greater than 0.");
         claim.setTotalClaimAmount(claimSubmitDto.getTotalClaimAmount());
         claim.setDiagnosis(claimSubmitDto.getDiagnosis());
         claim.setRemarks(claimSubmitDto.getRemarks());
@@ -87,93 +100,95 @@ public class ClaimService {
             }
         }
         Claim savedClaim = claimRepository.save(claim);
+
+        saveHistory(savedClaim.getId(),ClaimStatus.DRAFT.toString(),ClaimStatus.SUBMITTED.toString(),email,"ClaimHistory Saved");
+        kafkaProducerService.sendClaimSubmittedEvent(savedClaim);
         kafkaProducerService.sendFraudCheckEvent(
                 savedClaim.getId(),
                 savedClaim.getPatientId(),
                 savedClaim.getTotalClaimAmount(),
                 tenantId
         );
-        saveHistory(savedClaim.getId(),ClaimStatus.DRAFT.toString(),ClaimStatus.SUBMITTED.toString(),email,"ClaimHistory Saved");
-
-        return new ResponseEntity<>( new ApiResponse("Claim Submitted Successfully",true), HttpStatus.OK);
+        return  new  ApiResponse("Claim Submitted Successfully",true);
 
     }
 
-    public ResponseEntity<ClaimResponse> getClaimById(Long id, String tenantId, String role){
+    public ClaimResponse getClaimById(Long id, String tenantId, String role){
        Claim claim = claimRepository.findById(id)
                .orElseThrow(()-> new RuntimeException("Claim not find with the id "+id));
 
-       if(role.equals("ROLE_HOSPITAL") || role.equals("ROLE_HOSPITAL_USER")){
+       if("ROLE_HOSPITAL".equals(role) || "ROLE_HOSPITAL_USER".equals(role)){
            if(!claim.getHospitalId().equals(tenantId)){
-                throw new RuntimeException("Unauthorized !!");
+                throw new IllegalArgumentException("Unauthorized !!");
            }
        }
-       if(role.equals("ROLE_INSURER")|| role.equals("ROLE_INSURER_USER")){
+       else if("ROLE_INSURER".equals(role)|| "ROLE_INSURER_USER".equals(role)){
            if(!claim.getInsurerId().equals(tenantId)){
-               throw new RuntimeException("Unauthorized !!");
+               throw new IllegalArgumentException("Unauthorized !!");
            }
        }
+       else{
+           throw new IllegalArgumentException("Access Denied: Invalid security role context.");
+       }
+
        ClaimResponse claimResponse = dtoMapper.mapDto(claim);
-       return  new ResponseEntity<>(claimResponse, HttpStatus.OK);
+       return  claimResponse;
     }
-    public ResponseEntity<List<ClaimResponse>> getClaimByHospitalId(Long id, String tenantId, String role){
+    public List<ClaimResponse> getClaimByHospitalId(String tenantId, String role){
         if(!role.equals("ROLE_HOSPITAL") && !role.equals("ROLE_HOSPITAL_USER")){
-            throw new RuntimeException("Unauthorized !!");
+            throw new IllegalArgumentException("Unauthorized !!");
         }
 
-        List<Claim> claims = claimRepository.findByHospitalId(tenantId)
-                .orElseThrow(()-> new RuntimeException("Claim not find ofr the Hospital with Id "+id));
-
+        List<Claim> claims = claimRepository.findByHospitalId(tenantId);
         List<ClaimResponse> response = claims.stream()
                 .map(claim -> dtoMapper.mapDto(claim))
                 .toList();
-        return new ResponseEntity<>(response, HttpStatus.OK);
+        return response;
     }
 
-    public ResponseEntity<List<ClaimResponse>> getClaimByStatus(ClaimStatus status, String tenantId, String role){
+    public List<ClaimResponse> getClaimByStatus(ClaimStatus status, String tenantId, String role){
         List<Claim> claims;
-        if(role.equals("ROLE_HOSPITAL")||role.equals("ROLE_HOSPITAL_USER")){
-            claims = claimRepository.findByStatusAndHospitalId(status,tenantId)
-                    .orElseThrow(()-> new RuntimeException("Claim not find  claims with teh Id "+ tenantId+" and Status"+status));
+        if("ROLE_HOSPITAL".equals(role)||"ROLE_HOSPITAL_USER".equals(role)){
+            claims = claimRepository.findByStatusAndHospitalId(status,tenantId);
         }
-
-        else if(role.equals("ROLE_INSURER")|| role.equals("ROLE_INSURER_USER")){
-            claims = claimRepository.findByStatusAndInsurerId(status,tenantId)
-                    .orElseThrow(()-> new RuntimeException("Claim not find  claims with teh Id "+ tenantId + " and Status"+status));
+        else if("ROLE_INSURER".equals(role)|| "ROLE_INSURER_USER".equals(role)){
+            claims = claimRepository.findByStatusAndInsurerId(status,tenantId);
         }
         else{
-            throw new RuntimeException("Unauthorized to check claims!! ");
+            throw new IllegalArgumentException("Unauthorized to check claims!! ");
         }
 
         List<ClaimResponse> response = claims.stream()
                 .map(claim -> dtoMapper.mapDto(claim))
                 .toList();
-        return new ResponseEntity<>(response, HttpStatus.OK);
+        return response;
     }
-
-    public ResponseEntity<ApiResponse> approveClaim( Long id, ClaimApproveDto dto,
+    @Transactional
+    public ApiResponse approveClaim( Long id, ClaimApproveDto dto,
                                                      String tenantId, String role,String email){
-        if(!role.equals("ROLE_INSURER")&& !role.equals("ROLE_INSURER_USER")){
-            throw new RuntimeException("Unauthorized  to Settle claim !!");
+        if(!"ROLE_INSURER".equals(role)&& !"ROLE_INSURER_USER".equals(role)){
+            throw new IllegalArgumentException("Unauthorized  to Settle claim !!");
         }
         Claim claim = claimRepository.findById(id)
-                .orElseThrow(()-> new RuntimeException("Claim not found with the id "+id));
+                .orElseThrow(()-> new EntityNotFoundException("Claim not found with the id "+id));
         if(!claim.getInsurerId().equals(tenantId)){
-            throw new RuntimeException("not Authorized to Settle claim !!");
+            throw new IllegalArgumentException("not Authorized to Settle claim !!");
         }
-        if(!claim.getStatus().equals(ClaimStatus.SUBMITTED)){
-            throw new RuntimeException("Claim cant be approved at this stage");
+        if(!claim.getStatus().equals(ClaimStatus.SUBMITTED) &&
+                !claim.getStatus().equals(ClaimStatus.UNDER_REVIEW) &&
+                !claim.getStatus().equals(ClaimStatus.PRE_APPROVED)){
+            throw new IllegalStateException("Claim cant be approved at this stage");
         }
         if(dto.getItemApprovals()!=null){
             for(ClaimItemApproveDto itemDto : dto.getItemApprovals()){
                 ClaimItem item= claim.getClaimItems().stream()
                         .filter(i->i.getId().equals(itemDto.getClaimItemId()))
                         .findFirst().orElseThrow(()-> new RuntimeException("ClaimItem not found with the id "+itemDto.getClaimItemId()));
-                item.setApprovedAmount(itemDto.getApprovedAmount()); // approved Amount
+                item.setApprovedAmount(itemDto.getApprovedAmount());
                 double Rejected = item.getTotalPrice()-item.getApprovedAmount();
                 item.setRejectedAmount(Rejected); // rejected Amount
                 if(itemDto.getRejectionReason()!=null){
-                    item.setRejectionReason(item.getRejectionReason());
+                    item.setRejectionReason(itemDto.getRejectionReason());
                 }
             }
         }
@@ -184,75 +199,90 @@ public class ClaimService {
 
         claim.setApprovedAmount(totalApprove);
         claim.setRejectedAmount(totalRejected);
-        claim.setRemarks(claim.getRemarks());
-        if(totalRejected>0){
+        claim.setRemarks(dto.getRemark());
+        if(totalApprove == 0) {
+            claim.setStatus(ClaimStatus.REJECTED);
+        }
+        else if(totalRejected > 0) {
             claim.setStatus(ClaimStatus.PARTIALLY_APPROVED);
         }
-        else{
+        else {
             claim.setStatus(ClaimStatus.APPROVED);
         }
         claimRepository.save(claim);
+
+        kafkaProducerService.sendClaimApprovedEvent(claim);
         saveHistory(claim.getId(),ClaimStatus.SUBMITTED.toString(), ClaimStatus.APPROVED.toString(),email,"Form Submitted to approve");
-        return new ResponseEntity<>(new ApiResponse("Claim Approved Successfully",true), HttpStatus.OK);
+        return new  ApiResponse("Claim Approved Successfully",true);
     }
 
-
-    public ResponseEntity<ApiResponse> rejectClaimById(Long id, String tenantId, String role,String reason){
-        if(!role.equals("ROLE_INSURER") &&  !role.equals("ROLE_INSURER_USER")){
-            throw new RuntimeException("Unauthorized  to  Reject Claim  !!");
+@Transactional
+    public ApiResponse rejectClaimById(Long id, String tenantId, String role,String reason,String email){
+        if(!"ROLE_INSURER".equals(role) &&  !"ROLE_INSURER_USER".equals(role)){
+            throw new IllegalArgumentException ("Unauthorized  to  Reject Claim  !!");
         }
         Claim claim = claimRepository.findById(id)
                 .orElseThrow(()-> new RuntimeException("Claim not found with the id "+id));
         if(!claim.getInsurerId().equals(tenantId)){
-            throw new RuntimeException("the claim doesnt belong to this Insurance Company!!");
+            throw new IllegalArgumentException ("the claim doesnt belong to this Insurance Company!!");
 
         }
         if(!claim.getStatus().equals(ClaimStatus.SUBMITTED) &&
                 !claim.getStatus().equals(ClaimStatus.UNDER_REVIEW) &&
                 !claim.getStatus().equals(ClaimStatus.PRE_APPROVED)){
-           throw new RuntimeException("Claim can't be rejected at this stage");
+           throw new IllegalStateException("Claim can't be rejected at this stage");
         }
         claim.setRemarks(reason);
+        ClaimStatus oldStatus = claim.getStatus();
         claim.setStatus(ClaimStatus.REJECTED);
         claim.setApprovedAmount(0.0);
         claim.setRejectedAmount(claim.getTotalClaimAmount());
         claimRepository.save(claim);
-        return new ResponseEntity<>(new ApiResponse("Claim Rejected",true), HttpStatus.OK);
+        saveHistory(id, oldStatus.toString(),ClaimStatus.REJECTED.toString(),email,reason);
+        kafkaProducerService.sendClaimRejectedEvent(claim);
+        return new ApiResponse("Claim Rejected",true);
     }
 
-
-    public ResponseEntity<ApiResponse>cancelClaimById( Long id, String tenantId, String role,String reason){
-        if(!role.equals("ROLE_HOSPITAL") && !role.equals("ROLE_HOSPITAL_USER")){
-            throw new RuntimeException("Unauthorized  to  Cancel Claim  !!");
+@Transactional
+    public ApiResponse cancelClaimById( Long id, String tenantId, String role,String reason,String email){
+        if(!"ROLE_HOSPITAL".equals(role) && !"ROLE_HOSPITAL_USER".equals(role)){
+            throw new IllegalArgumentException("Unauthorized  to  Cancel Claim  !!");
         }
         Claim claim = claimRepository.findById(id)
                 .orElseThrow(()-> new RuntimeException("Claim not found with the id "+id));
         if(!claim.getHospitalId().equals(tenantId)){
-            throw new RuntimeException("the claim doesnt belong to this Hospital !!");
+            throw new IllegalArgumentException("the claim doesnt belong to this Hospital !!");
         }
         if(!claim.getStatus().equals(ClaimStatus.DRAFT) && !claim.getStatus().equals(ClaimStatus.SUBMITTED) &&
         !claim.getStatus().equals(ClaimStatus.UNDER_REVIEW)){
-            throw new RuntimeException("Claim cant be cancelled at this stage");
+            throw new IllegalArgumentException("Claim cant be cancelled at this stage");
         }
+        ClaimStatus oldStatus = claim.getStatus();
         claim.setStatus(ClaimStatus.CANCELLED);
         claim.setApprovedAmount(0.0);
         claim.setRejectedAmount(claim.getTotalClaimAmount());
         claim.setRemarks(reason);
         claimRepository.save(claim);
-        return new ResponseEntity<>(new ApiResponse("Claim Cancelled",true), HttpStatus.OK);
+        saveHistory(claim.getId(),oldStatus.toString(),ClaimStatus.CANCELLED.toString(),email,reason);
+        kafkaProducerService.sendClaimCancelledEvent(claim);
+        return new ApiResponse("Claim Cancelled",true);
 
     }
 
-    public ResponseEntity<List<ClaimHistoryDto>> getClaimHistory(Long id, String tenantId, String role){
-        List<ClaimHistory> historyList= claimHistoryRepo.findByClaimId(id)
-                .orElseThrow(()->new RuntimeException("Claim History  not found"));
+    public List<ClaimHistoryDto> getClaimHistory(Long id, String tenantId, String role){
+        if(!"ROLE_INSURER".equals(role)&&!"ROLE_INSURER_USER".equals(role)&& !"ROLE_HOSPITAL".equals(role)&& !"ROLE_HOSPITAL_USER".equals(role)){
+            throw new IllegalArgumentException("Unauthorized  to  Get Claim History  !!");
+        }
+
+
+        List<ClaimHistory> historyList= claimHistoryRepo.findByClaimId(id);
 
 
         List<ClaimHistoryDto> list =
                 historyList.stream()
-                        .map(ClaimHistoryDtoMapper::mapdto)
+                        .map(ClaimHistoryDtoMapper::mapDto)
                         .toList();
-        return  new ResponseEntity<>(list,HttpStatus.OK);
+        return  list ;
     }
 
 
@@ -266,8 +296,6 @@ public class ClaimService {
         history.setTimestamp(LocalDateTime.now());
         claimHistoryRepo.save(history);
     }
-
-
 
 }
 
