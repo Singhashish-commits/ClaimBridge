@@ -84,12 +84,13 @@ public class ClaimController {
     }
 
 
-//    @GetMapping("/stats")
-//    public ResponseEntity<ClaimStatsDto> getStats(
-//            @RequestHeader("tenantId") String tenantId,
-//            @RequestHeader("role") String role) {
-//        return claimService.getClaimStats(tenantId, role);
-//    }
+    @GetMapping("/stats")
+    public ResponseEntity<ClaimStatsDto> getStats(
+            @RequestHeader("tenantId") String tenantId,
+            @RequestHeader("role") String role) {
+         ClaimStatsDto dto = claimService.getClaimStats(tenantId, role);
+        return ResponseEntity.ok(dto);
+    }
 
 
 

@@ -284,8 +284,6 @@ public class ClaimService {
                         .toList();
         return  list ;
     }
-
-
     private void saveHistory(Long claimId, String from, String to, String by, String notes) {
         ClaimHistory history = new ClaimHistory();
         history.setClaimId(claimId);
@@ -297,6 +295,49 @@ public class ClaimService {
         claimHistoryRepo.save(history);
     }
 
+
+    public  ClaimStatsDto getClaimStats(String tenantId, String role){
+        List<Claim> claims;
+        if("ROLE_HOSPITAL".equals(role) || "ROlE_HOSPITAL_USER".equals(role)){
+            claims = claimRepository.findByHospitalId(tenantId);
+        }
+        else if("ROLE_INSURER".equals(role) || "ROLE_INSURER_USER".equals(role)){
+            claims = claimRepository.findByInsurerId(tenantId);
+        }
+        else {
+            throw new IllegalArgumentException("Unauthorized  to  Get Claim Stats !!");
+        }
+        ClaimStatsDto claimStatsDto = new ClaimStatsDto();
+        if(claims==null && claims.isEmpty()){
+            return claimStatsDto;
+        }
+        claimStatsDto.setTotalClaimAmount(claims.size());
+        claimStatsDto.setPendingClaims(claims.stream().filter(
+                c-> c.getStatus().equals(ClaimStatus.PRE_APPROVED)||
+                        c.getStatus().equals(ClaimStatus.UNDER_REVIEW)||
+                        c.getStatus().equals(ClaimStatus.SUBMITTED)
+        ).count());
+        claimStatsDto.setApprovedClaims(claims.stream().filter(
+                c-> c.getStatus().equals(ClaimStatus.APPROVED)||
+                        c.getStatus().equals(ClaimStatus.PARTIALLY_APPROVED)
+        ).count());
+        claimStatsDto.setRejectedClaims(claims.stream().filter(
+                c-> c.getStatus().equals(ClaimStatus.CANCELLED)||
+                        c.getStatus().equals(ClaimStatus.REJECTED)
+        ).count());
+        double totalClaimAmount = claims.stream().mapToDouble
+                (c->c.getTotalClaimAmount()!=null ? c.getTotalClaimAmount() : 0.0).sum();
+
+        double ApprovedAmount = claims.stream().mapToDouble(
+                c->c.getApprovedAmount()!= null ? c.getApprovedAmount():0.0).sum();
+        double totalRejected = claims.stream().mapToDouble(
+                c-> c.getRejectedAmount()==null ?c.getRejectedAmount():0.0).sum();
+        claimStatsDto.setTotalClaimAmount(totalClaimAmount);
+        claimStatsDto.setRejectedClaimAmount(totalRejected);
+        claimStatsDto.setRejectedClaimAmount(ApprovedAmount);
+
+            return claimStatsDto;
+    }
 }
 
 
