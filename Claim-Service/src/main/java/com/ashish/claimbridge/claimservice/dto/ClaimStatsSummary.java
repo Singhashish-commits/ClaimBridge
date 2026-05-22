@@ -8,7 +8,7 @@ import lombok.NoArgsConstructor;
 
 
 public interface ClaimStatsSummary {
-    ClaimStatus getClaimStatus();
+    ClaimStatus getStatus();
     Long getCount();
     Double getTotalClaimed();
     Double getTotalApproved();

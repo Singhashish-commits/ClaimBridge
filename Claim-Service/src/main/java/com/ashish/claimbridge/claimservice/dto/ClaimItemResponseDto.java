@@ -10,7 +10,6 @@ import lombok.NoArgsConstructor;
 public class ClaimItemResponseDto {
     private String itemName;
     private Integer quantity;
-    private Double unitPrice;
     private Double totalPrice;
     private Boolean claimable;
     private Double approvedAmount;

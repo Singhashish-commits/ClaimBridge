@@ -60,7 +60,7 @@ public class ClaimService {
         }
 
         try{
-            prescriptionClient.validateForClaim(claimSubmitDto.getPrescriptionId(), tenantId, role);
+            prescriptionClient.validateForClaim(claimSubmitDto.getPrescriptionId(), tenantId, "SYSTEM_INTERNAL");
         }catch(FeignException.NotFound ex){
             throw new RuntimeException("Prescription Invalid or Expired for claim Submission");
         }
@@ -195,11 +195,13 @@ public class ClaimService {
         double totalApprove = claim.getClaimItems().stream()
                 .mapToDouble(i-> i.getApprovedAmount()!=null? i.getApprovedAmount():0.0 )
                 .sum();
-        double totalRejected = claim.getTotalClaimAmount()-totalApprove;
+        double safeTotalAmount = claim.getTotalClaimAmount() != null ? claim.getTotalClaimAmount() : 0.0;
+        double totalRejected = safeTotalAmount - totalApprove;
 
         claim.setApprovedAmount(totalApprove);
         claim.setRejectedAmount(totalRejected);
-        claim.setRemarks(dto.getRemark());
+        String existNote = claim.getRemarks()!= null ? claim.getRemarks():"";
+        claim.setRemarks(existNote+" APPROVAL REMARK :-"+dto.getRemark());
         if(totalApprove == 0) {
             claim.setStatus(ClaimStatus.REJECTED);
         }
@@ -222,7 +224,7 @@ public class ClaimService {
             throw new IllegalArgumentException ("Unauthorized  to  Reject Claim  !!");
         }
         Claim claim = claimRepository.findById(id)
-                .orElseThrow(()-> new RuntimeException("Claim not found with the id "+id));
+                .orElseThrow(()-> new EntityNotFoundException("Claim not found with the id "+id));
         if(!claim.getInsurerId().equals(tenantId)){
             throw new IllegalArgumentException ("the claim doesnt belong to this Insurance Company!!");
 
@@ -232,7 +234,8 @@ public class ClaimService {
                 !claim.getStatus().equals(ClaimStatus.PRE_APPROVED)){
            throw new IllegalStateException("Claim can't be rejected at this stage");
         }
-        claim.setRemarks(reason);
+        String existNote = claim.getRemarks()!= null ? claim.getRemarks():"";
+        claim.setRemarks(existNote+" REJECTION REMARK :-"+ reason);
         ClaimStatus oldStatus = claim.getStatus();
         claim.setStatus(ClaimStatus.REJECTED);
         claim.setApprovedAmount(0.0);
@@ -249,7 +252,7 @@ public class ClaimService {
             throw new IllegalArgumentException("Unauthorized  to  Cancel Claim  !!");
         }
         Claim claim = claimRepository.findById(id)
-                .orElseThrow(()-> new RuntimeException("Claim not found with the id "+id));
+                .orElseThrow(()-> new EntityNotFoundException("Claim not found with the id "+id));
         if(!claim.getHospitalId().equals(tenantId)){
             throw new IllegalArgumentException("the claim doesnt belong to this Hospital !!");
         }
@@ -261,7 +264,8 @@ public class ClaimService {
         claim.setStatus(ClaimStatus.CANCELLED);
         claim.setApprovedAmount(0.0);
         claim.setRejectedAmount(claim.getTotalClaimAmount());
-        claim.setRemarks(reason);
+        String existNote = claim.getRemarks()!= null ? claim.getRemarks():"";
+        claim.setRemarks(existNote+" CANCEL REMARK :-"+ reason);
         claimRepository.save(claim);
         saveHistory(claim.getId(),oldStatus.toString(),ClaimStatus.CANCELLED.toString(),email,reason);
         kafkaProducerService.sendClaimCancelledEvent(claim);
@@ -297,9 +301,8 @@ public class ClaimService {
 
 
     public  ClaimStatsDto getClaimStats(String tenantId, String role){
-//        List<Claim> claims;
         List<ClaimStatsSummary> summaries;
-        if("ROLE_HOSPITAL".equals(role) || "ROlE_HOSPITAL_USER".equals(role)){
+        if("ROLE_HOSPITAL".equals(role) || "ROLE_HOSPITAL_USER".equals(role)){
            summaries = claimRepository.getHospitalStats(tenantId);
         }
         else if("ROLE_INSURER".equals(role) || "ROLE_INSURER_USER".equals(role)){
@@ -310,7 +313,7 @@ public class ClaimService {
         }
 
         ClaimStatsDto claimStatsDto = new ClaimStatsDto();
-        if(summaries==null && summaries.isEmpty()){
+        if(summaries==null || summaries.isEmpty()){
             return claimStatsDto;
         }
         for(ClaimStatsSummary summary : summaries){
@@ -322,7 +325,7 @@ public class ClaimService {
             claimStatsDto.setRejectedClaimAmount(claimStatsDto.getRejectedClaimAmount()+rejected);
             claimStatsDto.setTotalApprovedAmount(claimStatsDto.getTotalApprovedAmount()+approved);
 
-            switch (summary.getClaimStatus()){
+            switch (summary.getStatus()){
                 case SUBMITTED:
                 case UNDER_REVIEW:
                 case PRE_APPROVED:

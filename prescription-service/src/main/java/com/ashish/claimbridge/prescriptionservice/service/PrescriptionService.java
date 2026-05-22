@@ -8,6 +8,7 @@ import com.ashish.claimbridge.prescriptionservice.mapper.PrescriptionMapper;
 import com.ashish.claimbridge.prescriptionservice.model.Prescription;
 import com.ashish.claimbridge.prescriptionservice.model.PrescriptionStatus;
 import com.ashish.claimbridge.prescriptionservice.repository.PrescriptionRepository;
+import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -80,13 +81,15 @@ public class PrescriptionService {
     }
 
     public ResponseEntity<PrescriptionDto> validateForClaim(Long id, String tenantId, String role) {
-        if(!role.equals("ROLE_INSURER") && !role.equals("ROLE_INSURER_USER")){
+        System.out.println("role received from claimService is "+role+tenantId);
+        if(!"ROLE_INSURER".equals(role) && !"ROLE_INSURER_USER".equals(role) && !"SYSTEM_INTERNAL".equals(role)){
             throw new RuntimeException("Unauthorized to validate for claim ");
         }
         Prescription prescription= prescriptionRepository.findByIdAndTenantId(id,tenantId)
-                .orElseThrow(()-> new RuntimeException("Prescription not found!"));
-        if(!prescription.getPrescriptionStatus().equals(PrescriptionStatus.ACTIVE)){
-            throw new RuntimeException("Prescription is not active");
+                .orElseThrow(()-> new EntityNotFoundException("Prescription not found!"));
+        if(!prescription.getPrescriptionStatus().equals(PrescriptionStatus.ACTIVE)
+                && !prescription.getPrescriptionStatus().equals(PrescriptionStatus.DISPENSED)){
+            throw new RuntimeException("Prescription must be Active or Dispensed to process a claim.");
         }
          boolean expired =prescription
                  .getItemList()
