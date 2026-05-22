@@ -13,7 +13,7 @@ public class ClaimStatsDto {
     private long approvedClaims;
     private long rejectedClaims;
 
-    private long totalApprovedAmount;
+    private double totalApprovedAmount;
     private double totalClaimAmount;
     private double rejectedClaimAmount;
 }

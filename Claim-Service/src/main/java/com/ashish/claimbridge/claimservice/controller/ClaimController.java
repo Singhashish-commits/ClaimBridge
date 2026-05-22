@@ -13,7 +13,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/claims")
 public class ClaimController {
-    private ClaimService claimService;
+    private  final ClaimService claimService;
     @Autowired
     public ClaimController(ClaimService claimService){
         this.claimService= claimService;
@@ -23,8 +23,8 @@ public class ClaimController {
             @RequestBody  ClaimSubmitDto claimSubmitDto,
             @RequestHeader("tenantId")String tenantId,@RequestHeader("role")String role,
             @RequestHeader("email")String email){
-     ApiResponse respone = claimService.submitClaim(claimSubmitDto,tenantId,role,email);
-     return ResponseEntity.status(HttpStatus.CREATED).body(respone);
+     ApiResponse response = claimService.submitClaim(claimSubmitDto,tenantId,role,email);
+     return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
     @GetMapping("/{id}")
     public ResponseEntity<ClaimResponse> getClaimById(@PathVariable("id")Long id,

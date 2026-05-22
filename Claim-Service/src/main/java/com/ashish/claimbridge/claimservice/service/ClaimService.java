@@ -297,45 +297,48 @@ public class ClaimService {
 
 
     public  ClaimStatsDto getClaimStats(String tenantId, String role){
-        List<Claim> claims;
+//        List<Claim> claims;
+        List<ClaimStatsSummary> summaries;
         if("ROLE_HOSPITAL".equals(role) || "ROlE_HOSPITAL_USER".equals(role)){
-            claims = claimRepository.findByHospitalId(tenantId);
+           summaries = claimRepository.getHospitalStats(tenantId);
         }
         else if("ROLE_INSURER".equals(role) || "ROLE_INSURER_USER".equals(role)){
-            claims = claimRepository.findByInsurerId(tenantId);
+           summaries = claimRepository.getInsurerStats(tenantId);
         }
         else {
             throw new IllegalArgumentException("Unauthorized  to  Get Claim Stats !!");
         }
+
         ClaimStatsDto claimStatsDto = new ClaimStatsDto();
-        if(claims==null && claims.isEmpty()){
+        if(summaries==null && summaries.isEmpty()){
             return claimStatsDto;
         }
-        claimStatsDto.setTotalClaimAmount(claims.size());
-        claimStatsDto.setPendingClaims(claims.stream().filter(
-                c-> c.getStatus().equals(ClaimStatus.PRE_APPROVED)||
-                        c.getStatus().equals(ClaimStatus.UNDER_REVIEW)||
-                        c.getStatus().equals(ClaimStatus.SUBMITTED)
-        ).count());
-        claimStatsDto.setApprovedClaims(claims.stream().filter(
-                c-> c.getStatus().equals(ClaimStatus.APPROVED)||
-                        c.getStatus().equals(ClaimStatus.PARTIALLY_APPROVED)
-        ).count());
-        claimStatsDto.setRejectedClaims(claims.stream().filter(
-                c-> c.getStatus().equals(ClaimStatus.CANCELLED)||
-                        c.getStatus().equals(ClaimStatus.REJECTED)
-        ).count());
-        double totalClaimAmount = claims.stream().mapToDouble
-                (c->c.getTotalClaimAmount()!=null ? c.getTotalClaimAmount() : 0.0).sum();
+        for(ClaimStatsSummary summary : summaries){
+            double claimed = summary.getTotalClaimed() != null ? summary.getTotalClaimed() : 0.0;
+            double approved = summary.getTotalApproved() != null ? summary.getTotalApproved() : 0.0;
+            double rejected = summary.getTotalRejected() != null ? summary.getTotalRejected() : 0.0;
 
-        double ApprovedAmount = claims.stream().mapToDouble(
-                c->c.getApprovedAmount()!= null ? c.getApprovedAmount():0.0).sum();
-        double totalRejected = claims.stream().mapToDouble(
-                c-> c.getRejectedAmount()==null ?c.getRejectedAmount():0.0).sum();
-        claimStatsDto.setTotalClaimAmount(totalClaimAmount);
-        claimStatsDto.setRejectedClaimAmount(totalRejected);
-        claimStatsDto.setRejectedClaimAmount(ApprovedAmount);
+            claimStatsDto.setTotalClaimAmount(claimStatsDto.getTotalClaimAmount()+claimed);
+            claimStatsDto.setRejectedClaimAmount(claimStatsDto.getRejectedClaimAmount()+rejected);
+            claimStatsDto.setTotalApprovedAmount(claimStatsDto.getTotalApprovedAmount()+approved);
 
+            switch (summary.getClaimStatus()){
+                case SUBMITTED:
+                case UNDER_REVIEW:
+                case PRE_APPROVED:
+                    claimStatsDto.setPendingClaims(claimStatsDto.getPendingClaims()+ summary.getCount());
+                    break;
+
+                case APPROVED:
+                case PARTIALLY_APPROVED:
+                    claimStatsDto.setApprovedClaims(claimStatsDto.getApprovedClaims()+ summary.getCount());
+                    break;
+                case CANCELLED:
+                case REJECTED:
+                    claimStatsDto.setRejectedClaims(claimStatsDto.getRejectedClaims()+ summary.getCount());
+                    break;
+            }
+        }
             return claimStatsDto;
     }
 }
