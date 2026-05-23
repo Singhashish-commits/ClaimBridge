@@ -1,9 +1,12 @@
 package com.ashish.claimbridge.claimservice.service;
 
+import com.ashish.claimbridge.claimservice.dto.InsurancePolicyDto;
 import com.ashish.claimbridge.claimservice.event.ClaimEvent;
 import com.ashish.claimbridge.claimservice.event.FraudEvent;
+import com.ashish.claimbridge.claimservice.feignClient.PatientClient;
 import com.ashish.claimbridge.claimservice.model.Claim;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 
@@ -13,6 +16,7 @@ import java.time.LocalDateTime;
 @RequiredArgsConstructor
 
 public class KafkaProducerService {
+    private final PatientClient patientClient;
     private final KafkaTemplate<String, Object> kafkaTemplate;
     public void sendFraudCheckEvent(Long claimId, Long patientId,Double amount, String tenantId){
         FraudEvent event = new FraudEvent();
@@ -52,11 +56,22 @@ public class KafkaProducerService {
         event.setHospitalId(claim.getHospitalId());
         event.setInsurerId(claim.getInsurerId());
         event.setStatus(claim.getStatus());
-        event.setTotalAmount(claim.getTotalClaimAmount());
+        event.setTotalClaimAmount(claim.getTotalClaimAmount());
         event.setTimestamp(LocalDateTime.now());
         event.setMessage(message);
         event.setPrescriptionId(claim.getPrescriptionId());
         event.setPrescriptionStatus(claim.getPrescriptionStatus());
+        event.setApprovedAmount(claim.getApprovedAmount());
+        event.setInsurancePolicyId(claim.getInsurancePolicyId());
+        ResponseEntity<InsurancePolicyDto> insurancePolicyDto = patientClient.findByIdAndPatientId(claim.getInsurancePolicyId(),
+                claim.getPatientId(), "SYSTEM_INTERNAL");
+        InsurancePolicyDto dto = insurancePolicyDto.getBody();
+        event.setCoverageLimit(dto.getCoverageLimit());
+        event.setUsedAmount(dto.getUsedAmount());
+        event.setClaimAmount(claim.getTotalClaimAmount());
+
+
+
 
         return event;
 

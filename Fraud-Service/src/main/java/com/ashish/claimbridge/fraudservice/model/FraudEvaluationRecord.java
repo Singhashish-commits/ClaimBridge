@@ -18,6 +18,7 @@ public class FraudEvaluationRecord {
     private long claimId;
     private long patientId;
     private long hospitalId;
+    private long prescriptionId;
     private double totalClaimAmount;
     @Enumerated(EnumType.STRING)
     private FraudResult fraudResult;

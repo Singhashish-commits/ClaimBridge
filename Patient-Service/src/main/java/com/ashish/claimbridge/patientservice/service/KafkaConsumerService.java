@@ -1,12 +1,16 @@
 package com.ashish.claimbridge.patientservice.service;
 
+import com.ashish.claimbridge.patientservice.event.ClaimEvent;
 import com.ashish.claimbridge.patientservice.event.HospitalCreateEvent;
 import com.ashish.claimbridge.patientservice.event.InsurerCreateEvent;
 import com.ashish.claimbridge.patientservice.event.OrganizationUpdateEvent;
 import com.ashish.claimbridge.patientservice.model.Hospital;
+import com.ashish.claimbridge.patientservice.model.InsurancePolicy;
 import com.ashish.claimbridge.patientservice.model.Insurer;
+import com.ashish.claimbridge.patientservice.model.PolicyStatus;
 import com.ashish.claimbridge.patientservice.repository.HospitalRepository;
 
+import com.ashish.claimbridge.patientservice.repository.InsurancePolicyRepository;
 import com.ashish.claimbridge.patientservice.repository.InsurerRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.kafka.annotation.KafkaListener;
@@ -17,11 +21,13 @@ import tools.jackson.databind.ObjectMapper;
 public class KafkaConsumerService {
     private final HospitalRepository hospitalRepository;
     private final InsurerRepository insurerRepository;
+    private final InsurancePolicyRepository insurancePolicyRepository;
 
     @Autowired
-    public KafkaConsumerService(HospitalRepository hospitalRepository, InsurerRepository insurerRepository) {
+    public KafkaConsumerService(HospitalRepository hospitalRepository, InsurerRepository insurerRepository, InsurancePolicyRepository insurancePolicyRepository) {
         this.hospitalRepository = hospitalRepository;
         this.insurerRepository = insurerRepository;
+        this.insurancePolicyRepository = insurancePolicyRepository;
     }
     @KafkaListener(topics = "hospital-created",groupId = "patient-service-group")
     public void consumeHospitalCreated(String message) {
@@ -95,6 +101,24 @@ public class KafkaConsumerService {
             e.printStackTrace();
         }
     }
+
+
+    @KafkaListener(topics= "claim-approved",groupId="patient-service-group")
+        public void consumeClaimApprovedEvent(String message) {
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            ClaimEvent event = mapper.readValue(message, ClaimEvent.class);
+           InsurancePolicy policy= insurancePolicyRepository.findById(event.getInsurancePolicyId())
+                   .orElseThrow(()-> new RuntimeException("insurance policy not found"));
+           policy.setUsedAmount(policy.getUsedAmount()+event.getApprovedAmount());
+           if(policy.getUsedAmount()>=policy.getCoverageLimit()){
+               policy.setStatus(PolicyStatus.INACTIVE);
+           }
+           insurancePolicyRepository.save(policy);
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+        }
 
 
 

@@ -28,7 +28,7 @@ public class InsurancePolicyController {
     public ResponseEntity<InsurancePolicyDto>getPolicyByNumber(@PathVariable String policyNumber,
                                                                @RequestHeader("tenantId")String tenantId,
                                                                @RequestHeader("role")String role) {
-        return insurancePolicyService.getPolicyByNumber(policyNumber,tenantId,role);
+        return insurancePolicyService.getPolicyByNumber(policyNumber, tenantId, role);
 
 
     }
@@ -50,5 +50,16 @@ public class InsurancePolicyController {
             @RequestHeader("tenantId") String tenantId) {
         return insurancePolicyService.verifyPolicyForClaim(patientId, insuranceId, tenantId);
     }
+
+    @GetMapping("/policy/{policyId}/{patientId}")
+    public ResponseEntity<InsurancePolicyDto> findByIdAndPatientId(
+            @PathVariable Long id,
+            @PathVariable Long patientId,
+            @RequestHeader("role")String role){
+       InsurancePolicyDto dto = insurancePolicyService.findByIdAndPatientId(id,patientId,role);
+       return ResponseEntity.ok(dto);
+
+    }
+
 
 }

@@ -1,25 +1,25 @@
-package com.ashish.claimbridge.claimservice.event;
+package com.ashish.claimbridge.fraudservice.event;
 
-import com.ashish.claimbridge.claimservice.model.ClaimStatus;
+import com.ashish.claimbridge.fraudservice.model.ClaimStatus;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class ClaimEvent {
+public class ClaimSubmittedEvent {
     private Long claimId;
     private String claimNumber;
     private Long patientId;
     private String hospitalId;
     private String insurerId;
     private ClaimStatus status;
-    private Double totalClaimAmount;
+    private Double totalAmount;
     private Double approvedAmount;
+    private Double claimAmount;
     private LocalDateTime timestamp;
     private String message;
     private Long prescriptionId;
@@ -27,6 +27,4 @@ public class ClaimEvent {
     private Long insurancePolicyId;
     private Double coverageLimit;
     private Double usedAmount;
-    private Double claimAmount;
-
 }

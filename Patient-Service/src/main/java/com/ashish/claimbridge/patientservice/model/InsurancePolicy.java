@@ -7,7 +7,7 @@ import java.time.LocalDate;
 
 @Data
 @Entity
-public class InsurencePolicy {
+public class InsurancePolicy {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -20,7 +20,7 @@ public class InsurencePolicy {
     private LocalDate validTo;
     @Enumerated(EnumType.STRING)
     private PolicyStatus status; // ACTIVE, INACTIVE, EXPIRED
-    private String tenantId;
+    private String tenantId; // this id nothing but the hospital id
 
 }
 

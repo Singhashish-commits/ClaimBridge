@@ -1,10 +1,10 @@
 package com.ashish.claimbridge.patientservice.mapper;
 
 import com.ashish.claimbridge.patientservice.dto.InsurancePolicyDto;
-import com.ashish.claimbridge.patientservice.model.InsurencePolicy;
+import com.ashish.claimbridge.patientservice.model.InsurancePolicy;
 
 public class InsurancePolicyDtoMapper {
-    static public InsurancePolicyDto mapDto(InsurencePolicy policy){
+    static public InsurancePolicyDto mapDto(InsurancePolicy policy){
         InsurancePolicyDto dto = new InsurancePolicyDto();
         dto.setPolicyNumber(policy.getPolicyNumber());
         dto.setPatientId(policy.getPatientId());

@@ -1,11 +1,9 @@
-package com.ashish.claimbridge.claimservice.event;
+package com.ashish.claimbridge.patientservice.event;
 
-import com.ashish.claimbridge.claimservice.model.ClaimStatus;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Data
@@ -17,16 +15,13 @@ public class ClaimEvent {
     private Long patientId;
     private String hospitalId;
     private String insurerId;
-    private ClaimStatus status;
-    private Double totalClaimAmount;
+    private String status;
+    private Double totalAmount;
     private Double approvedAmount;
     private LocalDateTime timestamp;
     private String message;
     private Long prescriptionId;
     private String prescriptionStatus;
     private Long insurancePolicyId;
-    private Double coverageLimit;
-    private Double usedAmount;
-    private Double claimAmount;
 
 }

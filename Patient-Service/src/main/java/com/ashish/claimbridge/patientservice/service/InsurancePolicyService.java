@@ -3,7 +3,7 @@ package com.ashish.claimbridge.patientservice.service;
 import com.ashish.claimbridge.patientservice.dto.ApiResponse;
 import com.ashish.claimbridge.patientservice.dto.InsurancePolicyDto;
 import com.ashish.claimbridge.patientservice.mapper.InsurancePolicyDtoMapper;
-import com.ashish.claimbridge.patientservice.model.InsurencePolicy;
+import com.ashish.claimbridge.patientservice.model.InsurancePolicy;
 import com.ashish.claimbridge.patientservice.model.PolicyStatus;
 import com.ashish.claimbridge.patientservice.repository.InsurancePolicyRepository;
 import com.ashish.claimbridge.patientservice.repository.InsurerRepository;
@@ -38,7 +38,7 @@ public class InsurancePolicyService {
                .orElseThrow(() -> new RuntimeException("Patient not found! for policy Enrollment!"));
 
 
-       InsurencePolicy policy = new InsurencePolicy();
+       InsurancePolicy policy = new InsurancePolicy();
        policy.setPatientId(dto.getPatientId());
        policy.setInsurerId(dto.getInsurerId());
        policy.setCoverageLimit(dto.getCoverageLimit());
@@ -53,13 +53,23 @@ public class InsurancePolicyService {
                ( new ApiResponse("Policy Enrolled Successfully",true), HttpStatus.ACCEPTED);
    }
 
-    public ResponseEntity<InsurancePolicyDto> getPolicyByNumber(String policyNumber, String tenantId, String role) {
-        if(!role.equals("ROLE_HOSPITAL") && !role.equals("ROLE_HOSPITAL_USER")
-                && !"ROLE_INSURER".equals(role) && !"ROLE_INSURER_USER".equals(role)) {
-            throw new RuntimeException("Unauthorized to Get Policy By Number!");
-        }
-        InsurencePolicy policy = insurancePolicyRepository.findByPolicyNumberAndTenantId(policyNumber,tenantId)
+    public ResponseEntity<InsurancePolicyDto> getPolicyByNumber(String policyNumber,String tenantId,  String role) {
+
+        InsurancePolicy policy = insurancePolicyRepository.findByPolicyNumber(policyNumber)
                 .orElseThrow(() -> new RuntimeException("Policy Not Found!"));
+        if("ROLE_HOSPITAL".equals(role) || "ROLE_HOSPITAL_USER".equals(role)) {
+            if(!policy.getTenantId().equals(tenantId)) {
+                throw new IllegalStateException("Unauthorized to Get Policy By Number!");
+            }
+        }
+        else if("ROLE_INSURER".equals(role)|| "ROLE_INSURER_USER".equals(role)) {
+            if(!policy.getInsurerId().equals(tenantId)) {
+                throw new  IllegalStateException("Unauthorized to Get Policy By Number!");
+            }
+        }
+        else{
+            throw new  IllegalStateException("Unauthorized !!");
+        }
        InsurancePolicyDto dto= InsurancePolicyDtoMapper.mapDto(policy);
        return new ResponseEntity<>(dto, HttpStatus.OK);
     }
@@ -68,7 +78,7 @@ public class InsurancePolicyService {
         if (!"ROLE_HOSPITAL".equals(role) && !"ROLE_INSURER".equals(role)) {
             throw new RuntimeException("Unauthorized!");
         }
-        InsurencePolicy policy = insurancePolicyRepository.findByIdAndTenantId(id,tenantId)
+        InsurancePolicy policy = insurancePolicyRepository.findByIdAndTenantId(id,tenantId)
                 .orElseThrow(() -> new RuntimeException("Policy Not Found!"));
         policy.setStatus(PolicyStatus.valueOf(status));
         insurancePolicyRepository.save(policy);
@@ -77,7 +87,8 @@ public class InsurancePolicyService {
         );
     }
     public ResponseEntity<InsurancePolicyDto> verifyPolicyForClaim(Long patientId, String tenantId, String insurerId) {
-        InsurencePolicy policy = insurancePolicyRepository.findByPatientIdAndPolicyNumber(patientId,insurerId)
+
+        InsurancePolicy policy = insurancePolicyRepository.findByPatientIdAndPolicyNumber(patientId,insurerId)
                 .orElseThrow(() -> new RuntimeException("Policy Not Found!"));
         if (policy.getStatus() != PolicyStatus.ACTIVE) {
             throw new RuntimeException("Policy is not active!");
@@ -93,5 +104,18 @@ public class InsurancePolicyService {
         return ResponseEntity.ok(dto);
 
 
+    }
+
+    public InsurancePolicyDto findByIdAndPatientId(Long id, Long patientId, String role) {
+        if(!"ROLE_HOSPITAL".equals(role) && !"ROLE_INSURER".equals(role) &&
+                !"ROLE_INSURER_USER".equals(role) && !"ROLE_HOSPITAL_USER".equals(role) &&
+                !"SYSTEM_INTERNAL".equals(role)) {
+            throw new IllegalArgumentException("Unauthorized!");
+
+        }
+        InsurancePolicy policy = insurancePolicyRepository.findByIdAndPatientId(id,patientId)
+                .orElseThrow(() -> new RuntimeException("Policy Not Found!"));
+        InsurancePolicyDto dto= InsurancePolicyDtoMapper.mapDto(policy);
+        return dto;
     }
 }
