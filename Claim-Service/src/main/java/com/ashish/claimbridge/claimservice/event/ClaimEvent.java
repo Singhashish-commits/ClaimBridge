@@ -5,6 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Data
@@ -20,5 +21,7 @@ public class ClaimEvent {
     private Double totalAmount;
     private LocalDateTime timestamp;
     private String message;
+    private Long prescriptionId;
+    private String prescriptionStatus;
 
 }

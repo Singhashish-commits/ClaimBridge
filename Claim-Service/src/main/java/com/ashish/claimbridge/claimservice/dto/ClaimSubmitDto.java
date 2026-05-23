@@ -10,6 +10,7 @@ public class ClaimSubmitDto {
     private Long patientId;
     private Long insurancePolicyId;
     private Long prescriptionId;
+    private String prescriptionStatus;
     private Double totalClaimAmount;
     private String diagnosis;
     private String remarks;

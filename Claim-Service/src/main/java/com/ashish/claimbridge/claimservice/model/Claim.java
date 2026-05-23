@@ -36,6 +36,7 @@ public class Claim {
     private String hospitalId;
     private String insurerId;
     private Long prescriptionId;
+    private String PrescriptionStatus;
 
 
     public void addClaimItem(ClaimItem item) {

@@ -17,7 +17,7 @@ public class PrescriptionDtoMapper {
         dto.setPatientId(prescription.getPatientId());
         dto.setDoctorName(prescription.getDoctorName());
         dto.setIssuedDate(prescription.getIssueDate());
-
+        dto.setPrescriptionStatus(prescription.getPrescriptionStatus().toString());
         dto.setItems(mapItem(prescription.getItemList()));
 
         return dto;

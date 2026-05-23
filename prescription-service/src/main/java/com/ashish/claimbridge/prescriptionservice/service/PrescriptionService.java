@@ -26,7 +26,7 @@ public class PrescriptionService {
         this.patientClient = patientClient;
         this.prescriptionRepository = prescriptionRepository;
     }
-    public ResponseEntity<ApiResponse> createPrescription(PrescriptionDto dto,
+    public ApiResponse createPrescription(PrescriptionDto dto,
                                                           String tenantId,
                                                           String role, String email) {
         if(!role.equals("ROLE_HOSPITAL") && !role.equals("ROLE_HOSPITAL_USER")){
@@ -39,10 +39,10 @@ public class PrescriptionService {
         }
          Prescription prescription= PrescriptionMapper.fromDtoToPrescription(dto,tenantId);
         prescriptionRepository.save(prescription);
-        return new ResponseEntity<>(new ApiResponse("prescription added Successfully",true), HttpStatus.OK);
+        return new ApiResponse("prescription added Successfully",true);
     }
 
-    public ResponseEntity<List<PrescriptionDto>> getPrescriptionsByPatientId(Long patientId, String tenantId, String role) {
+    public List<PrescriptionDto> getPrescriptionsByPatientId(Long patientId, String tenantId, String role) {
         if(!role.equals("ROLE_HOSPITAL") && !role.equals("ROLE_HOSPITAL_USER")){
             throw new RuntimeException("Unauthorized  to retrieve Prescription of patient ");
         }
@@ -50,22 +50,22 @@ public class PrescriptionService {
                 .orElseThrow(()-> new RuntimeException("Patient's Prescription not found!"));
        List<PrescriptionDto> dto= list.stream().map(PrescriptionDtoMapper::mapToDto).toList();
 
-        return new ResponseEntity<>(dto,HttpStatus.OK);
+        return dto;
 
     }
 
 
-    public ResponseEntity<PrescriptionDto> getPrescriptionById(Long id, String tenantId, String role) {
+    public PrescriptionDto getPrescriptionById(Long id, String tenantId, String role) {
         if(!role.equals("ROLE_HOSPITAL") && !role.equals("ROLE_HOSPITAL_USER")){
             throw new RuntimeException("Unauthorized  to retrieve Prescription of patient ");
         }
         Prescription prescription= prescriptionRepository.findByIdAndTenantId(id, tenantId)
                 .orElseThrow(()-> new RuntimeException("Prescription not found!"));
         PrescriptionDto dto = PrescriptionDtoMapper.mapToDto(prescription);
-        return new ResponseEntity<>(dto,HttpStatus.OK);
+        return dto;
     }
 
-    public ResponseEntity<ApiResponse> dispense(Long id, String tenantId, String role) {
+    public ApiResponse dispense(Long id, String tenantId, String role) {
         if(!role.equals("ROLE_HOSPITAL") && !role.equals("ROLE_HOSPITAL_USER")){
             throw new RuntimeException("Unauthorized  to retrieve Prescription of patient ");
         }
@@ -77,16 +77,17 @@ public class PrescriptionService {
 
         prescription.setPrescriptionStatus(PrescriptionStatus.DISPENSED);
         prescriptionRepository.save(prescription);
-        return  new ResponseEntity<>(new ApiResponse("prescription dispensed Successfully !!",true), HttpStatus.OK);
+        return new ApiResponse("prescription dispensed Successfully !!",true);
     }
 
-    public ResponseEntity<PrescriptionDto> validateForClaim(Long id, String tenantId, String role) {
+    public PrescriptionDto validateForClaim(Long id, String tenantId, String role) {
         System.out.println("role received from claimService is "+role+tenantId);
         if(!"ROLE_INSURER".equals(role) && !"ROLE_INSURER_USER".equals(role) && !"SYSTEM_INTERNAL".equals(role)){
             throw new RuntimeException("Unauthorized to validate for claim ");
         }
         Prescription prescription= prescriptionRepository.findByIdAndTenantId(id,tenantId)
                 .orElseThrow(()-> new EntityNotFoundException("Prescription not found!"));
+
         if(!prescription.getPrescriptionStatus().equals(PrescriptionStatus.ACTIVE)
                 && !prescription.getPrescriptionStatus().equals(PrescriptionStatus.DISPENSED)){
             throw new RuntimeException("Prescription must be Active or Dispensed to process a claim.");
@@ -95,10 +96,14 @@ public class PrescriptionService {
                  .getItemList()
                  .stream().anyMatch(item->item.getExpiryDate().isBefore(LocalDateTime.now()));
         if (expired) {
-
-            throw new RuntimeException("One or more Prescription has expired");
+            prescription.setPrescriptionStatus(PrescriptionStatus.EXPIRED);
+            prescriptionRepository.save(prescription);
+            throw new RuntimeException("One or more Prescription Item has expired");
+        }
+        if(prescription.getPrescriptionStatus().equals(PrescriptionStatus.EXPIRED)){
+            throw new RuntimeException("Prescription has expired");
         }
         PrescriptionDto prescriptionDto = PrescriptionDtoMapper.mapToDto(prescription);
-        return new ResponseEntity<>(prescriptionDto,HttpStatus.OK);
+            return  prescriptionDto;
     }
 }

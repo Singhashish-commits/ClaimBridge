@@ -14,6 +14,7 @@ import com.ashish.claimbridge.claimservice.repository.ClaimRepository;
 import feign.FeignException;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -60,7 +61,10 @@ public class ClaimService {
         }
 
         try{
-            prescriptionClient.validateForClaim(claimSubmitDto.getPrescriptionId(), tenantId, "SYSTEM_INTERNAL");
+            ResponseEntity<PrescriptionDto> response = prescriptionClient
+                    .validateForClaim(claimSubmitDto.getPrescriptionId(), tenantId, "SYSTEM_INTERNAL");
+            PrescriptionDto prescriptionDto = response.getBody();
+            claimSubmitDto.setPrescriptionStatus(prescriptionDto.getPrescriptionStatus());
         }catch(FeignException.NotFound ex){
             throw new RuntimeException("Prescription Invalid or Expired for claim Submission");
         }
@@ -84,7 +88,6 @@ public class ClaimService {
         claim.setSubmittedAt(LocalDateTime.now());
         claim.setApprovedAmount(0.0);
         claim.setRejectedAmount(0.0);
-
         if(claimSubmitDto.getClaimItems() != null){
             for(var claimItemDto : claimSubmitDto.getClaimItems()){
                 ClaimItem claimItem = new ClaimItem();

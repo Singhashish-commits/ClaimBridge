@@ -14,5 +14,6 @@ public class PrescriptionDto {
     private Long patientId;
     private String doctorName;
     private LocalDate issuedDate;
+    private String prescriptionStatus;
     private List<PrescriptionItemDto> items;
 }

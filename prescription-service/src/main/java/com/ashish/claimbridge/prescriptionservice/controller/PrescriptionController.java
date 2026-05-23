@@ -4,6 +4,7 @@ import com.ashish.claimbridge.prescriptionservice.dto.ApiResponse;
 import com.ashish.claimbridge.prescriptionservice.dto.PrescriptionDto;
 import com.ashish.claimbridge.prescriptionservice.service.PrescriptionService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -23,19 +24,22 @@ public class PrescriptionController {
                                                          @RequestHeader("tenantId") String tenantId,
                                                          @RequestHeader("role")String role,
                                                          @RequestHeader("email")String email) {
-        return prescriptionService.createPrescription(dto,tenantId,role,email);
+       ApiResponse response = prescriptionService.createPrescription(dto,tenantId,role,email);
+       return   new ResponseEntity<>(response, HttpStatus.OK);
     }
         @GetMapping("/{id}")
     public ResponseEntity<List<PrescriptionDto>> getPrescriptionsByPatientId(@PathVariable Long id,
                                                                      @RequestHeader("tenantId")String tenantId,
                                                                      @RequestHeader("role")String role){
-            return prescriptionService.getPrescriptionsByPatientId(id,tenantId,role);
+            List<PrescriptionDto> result = prescriptionService.getPrescriptionsByPatientId(id,tenantId,role);
+            return new ResponseEntity<>(result, HttpStatus.OK);
         }
         @GetMapping("/prescription/{id}")
 public ResponseEntity<PrescriptionDto> getPrescriptionById(@PathVariable Long id,
                                                            @RequestHeader("tenantId")String tenantId,
                                                           @RequestHeader("role")String role){
-        return prescriptionService.getPrescriptionById(id,tenantId,role);
+        PrescriptionDto dto = prescriptionService.getPrescriptionById(id,tenantId,role);
+        return new ResponseEntity<>(dto, HttpStatus.OK);
 
 
 }
@@ -44,14 +48,16 @@ public ResponseEntity<PrescriptionDto> getPrescriptionById(@PathVariable Long id
     public ResponseEntity<ApiResponse> dispense(@PathVariable Long id,
                                                 @RequestHeader("tenantId")String tenantId,
                                                 @RequestHeader("role")String role){
-        return prescriptionService.dispense(id,tenantId,role);
+        ApiResponse response= prescriptionService.dispense(id,tenantId,role);
+        return new ResponseEntity<>(response, HttpStatus.OK);
 }
 
 @GetMapping("/validate/{id}")
 public ResponseEntity<PrescriptionDto> validateForClaim(@PathVariable Long id,
                                                     @RequestHeader("tenantId")String tenantId,
                                                     @RequestHeader("role")String role){
-        return prescriptionService.validateForClaim(id,tenantId,role);
+        PrescriptionDto dto = prescriptionService.validateForClaim(id,tenantId,role);
+        return new ResponseEntity<>(dto, HttpStatus.OK);
 }
 
 

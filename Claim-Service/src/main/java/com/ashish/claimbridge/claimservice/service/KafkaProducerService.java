@@ -55,6 +55,9 @@ public class KafkaProducerService {
         event.setTotalAmount(claim.getTotalClaimAmount());
         event.setTimestamp(LocalDateTime.now());
         event.setMessage(message);
+        event.setPrescriptionId(claim.getPrescriptionId());
+        event.setPrescriptionStatus(claim.getPrescriptionStatus());
+
         return event;
 
     }
