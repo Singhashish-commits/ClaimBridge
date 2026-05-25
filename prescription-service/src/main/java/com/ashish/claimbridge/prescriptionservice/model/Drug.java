@@ -14,11 +14,12 @@ import lombok.NoArgsConstructor;
 @Entity
 public class Drug {
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     private String drugCode;
-    private String name;
+    private String drugName;
     private String category;
     private Double standardCost;
+    private String insurerId;
 
 }

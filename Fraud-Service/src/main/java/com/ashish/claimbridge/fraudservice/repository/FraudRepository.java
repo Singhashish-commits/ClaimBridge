@@ -10,4 +10,6 @@ import java.time.LocalDateTime;
 public interface FraudRepository  extends JpaRepository<FraudEvaluationRecord,Long> {
 
     boolean existsByPatientIdAndPrescriptionIdAndEvaluatedAtAfter(Long patientId, Long prescriptionId, LocalDateTime date);
+
+    int countByHospitalIdAndPatientIdAndCheckedAtAfter(String hospitalId, Long patientId, LocalDateTime twoHourAgo);
 }

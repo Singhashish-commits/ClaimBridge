@@ -16,18 +16,21 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 public class PrescriptionItem {
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    private String drugCode;
-    private String drugName;
     private LocalDateTime expiryDate;
     private String dosage;
-    private String quantity;
+    private Double quantity;
+    private Double billedAmount;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "prescription_id")
     @JsonBackReference
     private Prescription prescription;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "drug_code")
+    private Drug drug;
 
 
 

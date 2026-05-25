@@ -34,12 +34,12 @@ public class PatientService {
                     "Both insuranceId and insuranceProvider must be provided together"
             );
         }
-        Patient patient = getPatient(patientDto, tenantId);
+        Patient patient = mapPatient(patientDto, tenantId);
         patientRepository.save(patient);
         return ResponseEntity.ok(new ApiResponse("Patient Saved Successfully",true));
     }
 
-    private static Patient getPatient(PatientDto patientDto, String tenantId) {
+    private static Patient mapPatient(PatientDto patientDto, String tenantId) {
         Patient patient = new Patient();
         patient.setFirstName(patientDto.getFirstName());
         patient.setLastName(patientDto.getLastName());
@@ -66,7 +66,7 @@ public class PatientService {
     }
 
     public ResponseEntity<PatientDto> findById(Long id,String tenantId,String role) {
-        if(!"ROLE_HOSPITAL".equals(role) && !"ROLE_HOSPITAL_USER".equals(role) ) {
+        if(!"ROLE_HOSPITAL".equals(role) && !"ROLE_HOSPITAL_USER".equals(role) && !"SYSTEM_INTERNAL".equals(role) ) {
             throw new RuntimeException("not Authorized to View Patient Details ");
         }
        Patient patient = patientRepository.findByIdAndTenantId(id,tenantId)

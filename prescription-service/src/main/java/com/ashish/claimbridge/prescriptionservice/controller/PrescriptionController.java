@@ -1,6 +1,7 @@
 package com.ashish.claimbridge.prescriptionservice.controller;
 
 import com.ashish.claimbridge.prescriptionservice.dto.ApiResponse;
+import com.ashish.claimbridge.prescriptionservice.dto.DrugDto;
 import com.ashish.claimbridge.prescriptionservice.dto.PrescriptionDto;
 import com.ashish.claimbridge.prescriptionservice.service.PrescriptionService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -59,6 +60,9 @@ public ResponseEntity<PrescriptionDto> validateForClaim(@PathVariable Long id,
         PrescriptionDto dto = prescriptionService.validateForClaim(id,tenantId,role);
         return new ResponseEntity<>(dto, HttpStatus.OK);
 }
+
+
+
 
 
 

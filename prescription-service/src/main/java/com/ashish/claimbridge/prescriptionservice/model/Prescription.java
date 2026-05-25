@@ -21,7 +21,8 @@ public class Prescription {
     private LocalDate issueDate;
     @Enumerated(EnumType.STRING)
     private PrescriptionStatus prescriptionStatus;
-    private String tenantId;
+    private String tenantId;  // which hospital submitted
+    private String insurerId;
 
     @OneToMany(mappedBy = "prescription",cascade = CascadeType.ALL)
     private List<PrescriptionItem> itemList;

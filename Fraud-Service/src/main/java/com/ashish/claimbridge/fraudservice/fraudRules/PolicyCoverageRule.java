@@ -9,10 +9,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration
-public class ExcessAmountRule implements FraudRule {
+public class PolicyCoverageRule implements FraudRule {
     private final FraudRepository fraudRepository;
     @Autowired
-    public ExcessAmountRule(FraudRepository fraudRepository){
+    public PolicyCoverageRule(FraudRepository fraudRepository){
         this.fraudRepository=fraudRepository;
     }
 
