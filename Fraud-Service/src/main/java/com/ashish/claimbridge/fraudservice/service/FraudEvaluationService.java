@@ -2,6 +2,7 @@ package com.ashish.claimbridge.fraudservice.service;
 
 import com.ashish.claimbridge.fraudservice.StrategyPattern.FraudRule;
 import com.ashish.claimbridge.fraudservice.event.ClaimSubmittedEvent;
+import com.ashish.claimbridge.fraudservice.event.FraudFlaggedEvent;
 import com.ashish.claimbridge.fraudservice.model.FraudEvaluationRecord;
 import com.ashish.claimbridge.fraudservice.model.FraudResult;
 import com.ashish.claimbridge.fraudservice.model.FraudRuleResult;
@@ -56,6 +57,12 @@ public class FraudEvaluationService {
         fraudRepository.save(record);
 
         if(finalResult!= FraudResult.PASS){
+            FraudFlaggedEvent fraudEvent = new FraudFlaggedEvent();
+            fraudEvent.setClaimId(event.getClaimId());
+            fraudEvent.setResult(finalResult.name());
+            fraudEvent.setReason(flaggedRules);
+            kafkaTemplate.send("fraud-flagged", fraudEvent);
+            System.out.println("Fraud flagged for claim: " + event.getClaimId());
 
         }
 

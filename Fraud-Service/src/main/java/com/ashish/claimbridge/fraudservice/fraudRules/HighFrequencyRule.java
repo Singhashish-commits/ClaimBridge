@@ -25,7 +25,7 @@ public class HighFrequencyRule implements FraudRule {
     @Override
     public FraudRuleResult evaluate(ClaimSubmittedEvent event) {
         LocalDateTime twoHourAgo = LocalDateTime.now().minusHours(2);
-        int recentClaims = fraudRepository.countByHospitalIdAndPatientIdAndCheckedAtAfter(
+        int recentClaims = fraudRepository.countByHospitalIdAndPatientIdAndEvaluationDateAfter(
                 event.getHospitalId(),event.getPatientId(),twoHourAgo
         );
 

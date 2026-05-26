@@ -3,10 +3,13 @@ package com.ashish.claimbridge.prescriptionservice.service;
 import com.ashish.claimbridge.prescriptionservice.dto.ApiResponse;
 import com.ashish.claimbridge.prescriptionservice.dto.DrugDto;
 import com.ashish.claimbridge.prescriptionservice.dto.PrescriptionDto;
+import com.ashish.claimbridge.prescriptionservice.dto.PrescriptionItemDto;
 import com.ashish.claimbridge.prescriptionservice.feignClient.PatientClient;
 import com.ashish.claimbridge.prescriptionservice.mapper.PrescriptionDtoMapper;
 import com.ashish.claimbridge.prescriptionservice.mapper.PrescriptionMapper;
+import com.ashish.claimbridge.prescriptionservice.model.Drug;
 import com.ashish.claimbridge.prescriptionservice.model.Prescription;
+import com.ashish.claimbridge.prescriptionservice.model.PrescriptionItem;
 import com.ashish.claimbridge.prescriptionservice.model.PrescriptionStatus;
 import com.ashish.claimbridge.prescriptionservice.repository.DrugRepository;
 import com.ashish.claimbridge.prescriptionservice.repository.PrescriptionRepository;
@@ -18,6 +21,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -116,5 +120,36 @@ public class PrescriptionService {
     }
 
 
+    public List<PrescriptionItemDto> getItemList(Long patientId, String tenantId, String role) {
+        if(!"ROLE_HOSPITAL".equals(role) &&  !"ROLE_HOSPITAL_USER".equals(role) &&
+                !"SYSTEM_INTERNAL".equals(role) && !"ROLE_INSURER".equals(role) && !"ROLE_INSURER_USER".equals(role) ){
+            throw new IllegalArgumentException("Unauthorized  to retrieve Prescription Items  of patient ");
+        }
 
+        Prescription prescription = prescriptionRepository.findByPatientIdAndInsurerId(patientId,tenantId)
+                .orElseThrow(()-> new EntityNotFoundException("Prescription not found!"));
+        List<PrescriptionItem> prescriptionItems = prescription.getItemList();
+        List<PrescriptionItemDto> itemDtoList = new ArrayList<>();
+        for (PrescriptionItem prescriptionItem : prescriptionItems) {
+            PrescriptionItemDto dto = getPrescriptionItemDto(prescriptionItem);
+            itemDtoList.add(dto);
+
+        }
+        return itemDtoList;
+    }
+
+    private  PrescriptionItemDto getPrescriptionItemDto(PrescriptionItem prescriptionItem) {
+        Drug drug = prescriptionItem.getDrug();
+        PrescriptionItemDto dto = new PrescriptionItemDto();
+        dto.setBilledAmount(prescriptionItem.getBilledAmount());
+        dto.setDosage(prescriptionItem.getDosage()); // drug code , drug name and
+        if(drug!=null){
+            dto.setDrugName(drug.getDrugName());
+            dto.setDrugCode(drug.getDrugCode());
+            dto.setStandardCost(drug.getStandardCost());
+        }
+        dto.setQuantity(prescriptionItem.getQuantity());
+        dto.setExpiryDate(prescriptionItem.getExpiryDate());
+        return dto;
+    }
 }

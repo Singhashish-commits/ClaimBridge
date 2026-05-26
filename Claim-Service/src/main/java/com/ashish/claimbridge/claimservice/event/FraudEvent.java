@@ -10,3 +10,4 @@ public class FraudEvent {
     private String tenantId;
     private double totalClaimAmount;
 }
+

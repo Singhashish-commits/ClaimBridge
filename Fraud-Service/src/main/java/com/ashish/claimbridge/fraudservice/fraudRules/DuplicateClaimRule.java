@@ -21,7 +21,7 @@ public class DuplicateClaimRule implements FraudRule {
 
     @Override
     public FraudRuleResult evaluate(ClaimSubmittedEvent event){
-                boolean duplicate = fraudRepository.existsByPatientIdAndPrescriptionIdAndEvaluatedAtAfter(
+                boolean duplicate = fraudRepository.existsByPatientIdAndPrescriptionIdAndEvaluationDateAfter(
                         event.getPatientId(),event.getPrescriptionId(), LocalDateTime.now().minusDays(30));
                 if(duplicate){
                     return new FraudRuleResult(FraudResult.FLAGGED,

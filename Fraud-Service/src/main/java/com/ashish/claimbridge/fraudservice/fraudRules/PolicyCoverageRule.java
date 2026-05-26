@@ -7,8 +7,9 @@ import com.ashish.claimbridge.fraudservice.model.FraudRuleResult;
 import com.ashish.claimbridge.fraudservice.repository.FraudRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.stereotype.Component;
 
-@Configuration
+@Component
 public class PolicyCoverageRule implements FraudRule {
     private final FraudRepository fraudRepository;
     @Autowired

@@ -11,15 +11,14 @@ import tools.jackson.databind.ObjectMapper;
 @RequiredArgsConstructor
 public class KafkaConsumerService {
     private final FraudEvaluationService fraudEvaluationService;
-
     @KafkaListener(topics = "claim-submitted",groupId = "fraud-service-group")
     public void consumeClaimSubmitted(String claimSubmitted) {
         System.out.println("Claim submitted: " + claimSubmitted);
         try{
             ObjectMapper objectMapper = new ObjectMapper();
             ClaimSubmittedEvent event = objectMapper.readValue(claimSubmitted, ClaimSubmittedEvent.class);
-
         }catch(Exception e){
+            System.out.println("error  " + e.getMessage());
             e.printStackTrace();
         }
     }

@@ -7,6 +7,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.RequestParam;
 
 @FeignClient(name = "patient-service")
 public interface PatientClient {
@@ -16,9 +17,9 @@ public interface PatientClient {
                                               @RequestHeader("role") String role);
 
     @GetMapping("/api/insurance/verify/policy")
-    ResponseEntity<InsurancePolicyDto> verifyPolicyForClaim(
+    ResponseEntity<InsurancePolicyDto> verifyPolicyForClaim(@RequestParam
             Long patientId,
-            String tenantId, String insurerId);
+           @RequestParam String tenantId,  @RequestHeader("insurerId") String insurerId);
 
     @GetMapping("/api/insurance/policy/{policyId}/{patientId}")
     ResponseEntity<InsurancePolicyDto> findByIdAndPatientId(
