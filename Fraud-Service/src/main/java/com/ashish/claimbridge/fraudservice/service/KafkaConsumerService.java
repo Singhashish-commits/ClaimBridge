@@ -17,6 +17,7 @@ public class KafkaConsumerService {
         try{
             ObjectMapper objectMapper = new ObjectMapper();
             ClaimSubmittedEvent event = objectMapper.readValue(claimSubmitted, ClaimSubmittedEvent.class);
+            fraudEvaluationService.evaluate(event);
         }catch(Exception e){
             System.out.println("error  " + e.getMessage());
             e.printStackTrace();
