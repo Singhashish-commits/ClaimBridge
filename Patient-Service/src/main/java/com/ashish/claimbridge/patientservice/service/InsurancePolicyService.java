@@ -36,8 +36,10 @@ public class InsurancePolicyService {
        }
        patientRepository.findByIdAndTenantId(dto.getPatientId(), tenantId)
                .orElseThrow(() -> new RuntimeException("Patient not found! for policy Enrollment!"));
-
-
+       boolean existPolicy= insurancePolicyRepository.existsByPatientIdAndPolicyNumber(dto.getPatientId(),dto.getPolicyNumber());
+        if(existPolicy) {
+            throw new RuntimeException("Policy already exists for the Patient Id: " + dto.getPatientId() + " and policy Number: " + dto.getPolicyNumber());
+        }
        InsurancePolicy policy = new InsurancePolicy();
        policy.setPatientId(dto.getPatientId());
        policy.setInsurerId(dto.getInsurerId());

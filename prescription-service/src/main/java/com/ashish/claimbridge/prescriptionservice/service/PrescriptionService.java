@@ -104,9 +104,13 @@ public class PrescriptionService {
                 && !prescription.getPrescriptionStatus().equals(PrescriptionStatus.DISPENSED)){
             throw new RuntimeException("Prescription must be Active or Dispensed to process a claim.");
         }
-         boolean expired =prescription
-                 .getItemList()
-                 .stream().anyMatch(item->item.getExpiryDate().isBefore(LocalDateTime.now()));
+        boolean expired = prescription
+                .getItemList()
+                .stream()
+                .anyMatch(item ->
+                        item.getExpiryDate() != null &&
+                                item.getExpiryDate().isBefore(LocalDateTime.now())
+                );
         if (expired) {
             prescription.setPrescriptionStatus(PrescriptionStatus.EXPIRED);
             prescriptionRepository.save(prescription);

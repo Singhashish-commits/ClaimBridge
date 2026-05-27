@@ -23,7 +23,7 @@ public interface PatientClient {
 
     @GetMapping("/api/insurance/policy/{policyId}/{patientId}")
     ResponseEntity<InsurancePolicyDto> findByIdAndPatientId(
-            @PathVariable long policyId,
+            @PathVariable Long policyId,
             @PathVariable Long patientId,@RequestHeader("role")String role );
 
 

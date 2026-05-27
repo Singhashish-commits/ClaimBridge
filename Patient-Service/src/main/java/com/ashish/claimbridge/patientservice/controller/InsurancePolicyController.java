@@ -8,7 +8,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
-@Controller
+@RestController
 @RequestMapping("/api/insurance")
 public class InsurancePolicyController {
     private final InsurancePolicyService insurancePolicyService;
@@ -53,10 +53,10 @@ public class InsurancePolicyController {
 
     @GetMapping("/policy/{policyId}/{patientId}")
     public ResponseEntity<InsurancePolicyDto> findByIdAndPatientId(
-            @PathVariable Long id,
+            @PathVariable Long policyId,
             @PathVariable Long patientId,
             @RequestHeader("role")String role){
-       InsurancePolicyDto dto = insurancePolicyService.findByIdAndPatientId(id,patientId,role);
+       InsurancePolicyDto dto = insurancePolicyService.findByIdAndPatientId(policyId,patientId,role);
        return ResponseEntity.ok(dto);
 
     }

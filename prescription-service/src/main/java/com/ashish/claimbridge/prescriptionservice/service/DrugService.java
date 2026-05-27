@@ -54,13 +54,7 @@ public class DrugService {
                     throw new RuntimeException("Drug Already Exist for this Insurer ID");
                 }
                 Drug drug = new Drug();
-                drug.setDrugName(dto.getDrugName());
-                drug.setCategory(dto.getCategory());
-                drug.setDrugCode(dto.getDrugCode());
-                drug.setInsurerId(tenantId);
-
-                drugRepository.save(drug);
-                return dto;
+        return getDrugInsurerDto(dto, tenantId, drug);
     }
 
     public DrugInsurerDto updateDrugById(Long id, DrugInsurerDto dto, String role, String tenantId) {
@@ -71,15 +65,12 @@ public class DrugService {
                 if(!drug.getInsurerId().equals(tenantId)){
                     throw new IllegalStateException("Not Authorized to Update Details");
                 }
-                drug.setDrugName(dto.getDrugName());
-                drug.setCategory(dto.getCategory());
-                drug.setDrugCode(dto.getDrugCode());
-                drug.setInsurerId(tenantId);
-                drugRepository.save(drug);
-                        return dto;
+        return getDrugInsurerDto(dto, tenantId, drug);
 
 
     }
+
+
 
     public  ApiResponse deleteById(Long id, String role, String tenantId) {
                 if(!"ROLE_INSURER".equals(role)&& !"ROLE_INSURER_USER".equals(tenantId)) {
@@ -93,5 +84,15 @@ public class DrugService {
                 drugRepository.deleteById(id);
                 return new ApiResponse(" Drug with id"+ id +" Deleted Successfully",true);
 
+    }
+
+    private DrugInsurerDto getDrugInsurerDto(DrugInsurerDto dto, String tenantId, Drug drug) {
+        drug.setDrugName(dto.getDrugName());
+        drug.setCategory(dto.getCategory());
+        drug.setDrugCode(dto.getDrugCode());
+        drug.setStandardCost(dto.getStanderCost());
+        drug.setInsurerId(tenantId);
+        drugRepository.save(drug);
+        return dto;
     }
 }

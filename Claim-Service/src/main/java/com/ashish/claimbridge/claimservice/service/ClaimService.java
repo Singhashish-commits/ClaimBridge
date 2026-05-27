@@ -83,7 +83,7 @@ public class ClaimService {
         claim.setRemarks(claimSubmitDto.getRemarks());
         claim.setInsurerId(claimSubmitDto.getInsurerId());
         claim.setHospitalId(tenantId);
-
+        claim.setPrescriptionStatus(claimSubmitDto.getPrescriptionStatus());
         claim.setStatus(ClaimStatus.SUBMITTED);
         claim.setSubmittedAt(LocalDateTime.now());
         claim.setApprovedAmount(0.0);

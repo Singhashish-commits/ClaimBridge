@@ -13,4 +13,6 @@ public interface InsurancePolicyRepository extends JpaRepository<InsurancePolicy
     Optional<InsurancePolicy> findByIdAndTenantId(Long id, String tenantId);
 
     Optional<InsurancePolicy> findByIdAndPatientId(Long id, Long patientId);
+
+    boolean existsByPatientIdAndPolicyNumber(Long patientId,String policyNumber);
 }
