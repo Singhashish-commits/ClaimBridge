@@ -26,7 +26,6 @@ public class FraudEvaluationService {
         this.fraudRepository=fraudRepository;
         this.kafkaTemplate=kafkaTemplate;
     }
-
     public void evaluate(ClaimSubmittedEvent event){
         List<FraudRuleResult> results= fraudRules.stream()
                 .map(rule-> rule.evaluate(event)).toList();
@@ -65,9 +64,5 @@ public class FraudEvaluationService {
             System.out.println("Fraud flagged for claim: " + event.getClaimId());
 
         }
-
-
-
-
     }
 }
