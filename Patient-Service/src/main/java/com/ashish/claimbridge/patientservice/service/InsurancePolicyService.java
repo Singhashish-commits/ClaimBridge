@@ -99,13 +99,9 @@ public class InsurancePolicyService {
             policy.setStatus(PolicyStatus.EXPIRED);
             insurancePolicyRepository.save(policy);
             throw new RuntimeException("Policy is expired!");
-
         }
-
        InsurancePolicyDto dto= InsurancePolicyDtoMapper.mapDto(policy);
         return ResponseEntity.ok(dto);
-
-
     }
 
     public InsurancePolicyDto findByIdAndPatientId(Long id, Long patientId, String role) {
