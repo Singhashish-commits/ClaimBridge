@@ -5,12 +5,12 @@ import com.ashish.claimbridge.claimservice.feignClient.PatientClient;
 import com.ashish.claimbridge.claimservice.feignClient.PrescriptionClient;
 import com.ashish.claimbridge.claimservice.mapper.ClaimHistoryDtoMapper;
 import com.ashish.claimbridge.claimservice.mapper.dtoMapper;
-import com.ashish.claimbridge.claimservice.model.Claim;
-import com.ashish.claimbridge.claimservice.model.ClaimHistory;
-import com.ashish.claimbridge.claimservice.model.ClaimItem;
-import com.ashish.claimbridge.claimservice.model.ClaimStatus;
+import com.ashish.claimbridge.claimservice.model.*;
 import com.ashish.claimbridge.claimservice.repository.ClaimHistoryRepo;
 import com.ashish.claimbridge.claimservice.repository.ClaimRepository;
+import com.ashish.claimbridge.claimservice.repository.OutBoxRepository;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import feign.FeignException;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
@@ -30,13 +30,17 @@ public class ClaimService {
     private final PrescriptionClient prescriptionClient;
     private final KafkaProducerService kafkaProducerService;
     private final ClaimHistoryRepo claimHistoryRepo;
+    private final ObjectMapper objectMapper;
+    private final OutBoxRepository outBoxRepository;
 
-    public ClaimService(ClaimRepository claimRepository, PatientClient patientClient, PrescriptionClient prescriptionClient, KafkaProducerService kafkaProducerService, ClaimHistoryRepo claimHistoryRepo) {
+    public ClaimService(ClaimRepository claimRepository, PatientClient patientClient, PrescriptionClient prescriptionClient, KafkaProducerService kafkaProducerService, ClaimHistoryRepo claimHistoryRepo, ObjectMapper objectMapper, OutBoxRepository outBoxRepository) {
         this.claimRepository = claimRepository;
         this.patientClient = patientClient;
         this.prescriptionClient = prescriptionClient;
         this.kafkaProducerService = kafkaProducerService;
         this.claimHistoryRepo = claimHistoryRepo;
+        this.objectMapper = objectMapper;
+        this.outBoxRepository = outBoxRepository;
     }
     @Transactional
     public ApiResponse submitClaim(ClaimSubmitDto claimSubmitDto, String tenantId, String role, String email) {
@@ -168,7 +172,7 @@ public class ClaimService {
     }
     @Transactional
     public ApiResponse approveClaim( Long id, ClaimApproveDto dto,
-                                                     String tenantId, String role,String email){
+                                                     String tenantId, String role,String email) throws JsonProcessingException {
         if(!"ROLE_INSURER".equals(role)&& !"ROLE_INSURER_USER".equals(role)){
             throw new IllegalArgumentException("Unauthorized  to Settle claim !!");
         }
@@ -205,6 +209,7 @@ public class ClaimService {
         claim.setRejectedAmount(totalRejected);
         String existNote = claim.getRemarks()!= null ? claim.getRemarks():"";
         claim.setRemarks(existNote+" APPROVAL REMARK :-"+dto.getRemark());
+        ClaimStatus previousState = claim.getStatus();
         if(totalApprove == 0) {
             claim.setStatus(ClaimStatus.REJECTED);
         }
@@ -215,9 +220,19 @@ public class ClaimService {
             claim.setStatus(ClaimStatus.APPROVED);
         }
         claimRepository.save(claim);
+        OutBoxEvent outBox = new OutBoxEvent();
+        outBox.setEventType("Claim "+claim.getStatus().toString());
+        outBox.setTopic("Claim "+claim.getStatus().toString().toLowerCase());
+        outBox.setPublished(false);
+        outBox.setCreatedAt(LocalDateTime.now());
+        outBox.setPayload(objectMapper
+                .writeValueAsString(kafkaProducerService.buildEvent(claim,"claim Approval Message")));
+
+
+        outBoxRepository.save(outBox);
 
         kafkaProducerService.sendClaimApprovedEvent(claim);
-        saveHistory(claim.getId(),ClaimStatus.SUBMITTED.toString(), ClaimStatus.APPROVED.toString(),email,"Form Submitted to approve");
+        saveHistory(claim.getId(),previousState.toString(), claim.getStatus().toString(),email,"Form Submitted to approve");
         return new  ApiResponse("Claim Approved Successfully",true);
     }
 

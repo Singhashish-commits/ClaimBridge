@@ -48,7 +48,7 @@ public class KafkaProducerService {
 
 
 
-    private ClaimEvent buildEvent(Claim claim, String message) {
+    public ClaimEvent buildEvent(Claim claim, String message) {
         ClaimEvent event = new ClaimEvent();
         event.setClaimId(claim.getId());
         event.setClaimNumber(claim.getClaimNumber());

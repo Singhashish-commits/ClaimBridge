@@ -1,4 +1,4 @@
-package com.ashish.claimbridg.notificationservice;
+package com.ashish.claimbridge.notificationservice;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
