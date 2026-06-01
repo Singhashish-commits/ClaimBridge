@@ -18,19 +18,11 @@ import java.time.LocalDateTime;
 public class KafkaProducerService {
     private final PatientClient patientClient;
     private final KafkaTemplate<String, Object> kafkaTemplate;
-    public void sendFraudCheckEvent(Long claimId, Long patientId,Double amount, String tenantId){
-        FraudEvent event = new FraudEvent();
-        event.setClaimId(claimId);
-        event.setTenantId(tenantId);
-        event.setPatentId(patientId);
-        event.setTotalClaimAmount(amount);
-        kafkaTemplate.send("claim-fraud-check",event);
-        System.out.println("Fraud check event sent for claim: " + claimId);
-    }
-    public void sendClaimSubmittedEvent(Claim claim){
-        ClaimEvent event = buildEvent(claim,"claim-Submitted");
-        kafkaTemplate.send("claim-submitted",event);
 
+
+    public void sendClaimSubmittedEvent(ClaimEvent event) {
+//        ClaimEvent event = buildEvent(claim,"claim-Submitted");
+        kafkaTemplate.send("claim-submitted",event);
     }
 
     public void sendClaimApprovedEvent(Claim claim){
@@ -48,7 +40,7 @@ public class KafkaProducerService {
 
 
 
-    public ClaimEvent buildEvent(Claim claim, String message) {
+    private ClaimEvent buildEvent(Claim claim, String message) {
         ClaimEvent event = new ClaimEvent();
         event.setClaimId(claim.getId());
         event.setClaimNumber(claim.getClaimNumber());

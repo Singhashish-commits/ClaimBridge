@@ -3,6 +3,7 @@ package com.ashish.claimbridge.claimservice.controller;
 import com.ashish.claimbridge.claimservice.dto.*;
 import com.ashish.claimbridge.claimservice.model.ClaimStatus;
 import com.ashish.claimbridge.claimservice.service.ClaimService;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -51,7 +52,7 @@ public class ClaimController {
     public ResponseEntity<ApiResponse> approveClaim(@PathVariable("id")Long id,@RequestHeader("tenantId")String tenantId,
                                                     @RequestHeader("role")String role,
                                                     @RequestBody  ClaimApproveDto claimApproveDto,
-                                                    @RequestHeader("email") String email){
+                                                    @RequestHeader("email") String email) throws JsonProcessingException {
         return ResponseEntity.ok(claimService.approveClaim(id, claimApproveDto,tenantId,role,email));
     }
 

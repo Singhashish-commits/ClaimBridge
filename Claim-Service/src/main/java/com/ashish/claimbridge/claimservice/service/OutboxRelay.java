@@ -8,6 +8,7 @@ import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
@@ -24,6 +25,21 @@ public class OutboxRelay {
     @Scheduled(fixedDelayString = "${outbox.relay.fixed-delay-ms}")
     public void relay() {
         List<OutBoxEvent> unpublished= outBoxRepository.findByPublishedFalse();
+
+        for(OutBoxEvent event :unpublished){
+            try{
+                kafkaTemplate.send(event.getTopic(),event.getPayload());
+                event.setPublished(true);
+                event.setPublishedAt(LocalDateTime.now());
+                outBoxRepository.save(event);
+                System.out.println("published Event:  " + event.getEventType());
+
+            }catch (Exception e){
+                System.out.println("failed to publish Event:  " + event.getEventType());
+                throw new RuntimeException("failed to publish Event:  " + event.getEventType());
+            }
+
+        }
 
     }
 
