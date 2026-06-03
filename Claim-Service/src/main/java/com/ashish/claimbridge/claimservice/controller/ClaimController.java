@@ -49,10 +49,10 @@ public class ClaimController {
         return ResponseEntity.ok(claimService.getClaimByStatus(status,tenantId,role));
     }
     @PatchMapping("/approve/{id}")
-    public ResponseEntity<ApiResponse> approveClaim(@PathVariable("id")Long id,@RequestHeader("tenantId")String tenantId,
-                                                    @RequestHeader("role")String role,
-                                                    @RequestBody  ClaimApproveDto claimApproveDto,
-                                                    @RequestHeader("email") String email) throws JsonProcessingException {
+    public ResponseEntity<ApiResponse> approveClaim(
+            @PathVariable("id")Long id,@RequestHeader("tenantId")String tenantId,
+            @RequestHeader("role")String role, @RequestBody  ClaimApproveDto claimApproveDto,
+            @RequestHeader("email") String email) throws JsonProcessingException {
         return ResponseEntity.ok(claimService.approveClaim(id, claimApproveDto,tenantId,role,email));
     }
 

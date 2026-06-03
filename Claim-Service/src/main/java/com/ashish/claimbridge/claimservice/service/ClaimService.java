@@ -106,7 +106,7 @@ public class ClaimService {
         Claim savedClaim = claimRepository.save(claim);
 
         saveHistory(savedClaim.getId(), ClaimStatus.DRAFT.toString(), ClaimStatus.SUBMITTED.toString(), email, "ClaimHistory Saved");
-        kafkaProducerService.sendClaimSubmittedEvent(buildEvent(savedClaim,"claim-Submitted"));
+        kafkaProducerService.sendClaimSubmittedEvent(buildEvent(savedClaim,"claim-submitted"));
         return new ApiResponse("Claim Submitted Successfully", true);
 
     }
@@ -221,7 +221,6 @@ public class ClaimService {
         claimRepository.save(claim);
 
         outBoxService.saveOutBoxEvent(eventType, topic, buildEvent(claim, eventType.toLowerCase()));
-//        kafkaProducerService.sendClaimApprovedEvent(claim);
         saveHistory(claim.getId(), previousState.toString(), claim.getStatus().toString(), email, "Form Submitted to approve");
         return new ApiResponse("Claim Approved Successfully", true);
     }

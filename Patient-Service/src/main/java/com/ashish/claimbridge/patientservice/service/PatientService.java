@@ -59,6 +59,9 @@ public class PatientService {
         patient.setInsuranceId(patientDto.getInsuranceId());
         patient.setInsuranceProvider(patientDto.getInsuranceProvider());
         patient.setAadhaarId(patientDto.getAadhaarId());
+        patient.setAddress(patientDto.getAddress());
+        patient.setState(patientDto.getState());
+        patient.setCity(patientDto.getCity());
         return patient;
     }
 
