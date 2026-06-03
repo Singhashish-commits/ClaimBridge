@@ -8,12 +8,14 @@ import com.ashish.claimbridge.patientservice.model.PolicyStatus;
 import com.ashish.claimbridge.patientservice.repository.InsurancePolicyRepository;
 import com.ashish.claimbridge.patientservice.repository.InsurerRepository;
 import com.ashish.claimbridge.patientservice.repository.PatientRepository;
+import org.jspecify.annotations.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
+import java.util.List;
 
 @Service
 public class InsurancePolicyService {
@@ -115,5 +117,14 @@ public class InsurancePolicyService {
                 .orElseThrow(() -> new RuntimeException("Policy Not Found!"));
         InsurancePolicyDto dto= InsurancePolicyDtoMapper.mapDto(policy);
         return dto;
+    }
+
+    public List<InsurancePolicyDto> findByInsurerId(String tenantId, String role) {
+        if(!"ROLE_INSURER".equals(role) && !"ROLE_INSURER_USER".equals(role)) {
+            throw new IllegalArgumentException("Unauthorized!");
+        }
+        List<InsurancePolicy> list = insurancePolicyRepository.findByInsurerId(tenantId);
+       return  list.stream().map(InsurancePolicyDtoMapper::mapDto).toList();
+
     }
 }

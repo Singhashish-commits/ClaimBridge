@@ -2,19 +2,26 @@ package com.ashish.claimbridge.patientservice.controller;
 
 import com.ashish.claimbridge.patientservice.dto.ApiResponse;
 import com.ashish.claimbridge.patientservice.dto.InsurancePolicyDto;
+import com.ashish.claimbridge.patientservice.dto.InsurerDto;
 import com.ashish.claimbridge.patientservice.service.InsurancePolicyService;
+import com.ashish.claimbridge.patientservice.service.PatientService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/insurance")
 public class InsurancePolicyController {
     private final InsurancePolicyService insurancePolicyService;
+    private final PatientService patientService;
+
     @Autowired
-    public InsurancePolicyController(InsurancePolicyService insurancePolicyService) {
+    public InsurancePolicyController(InsurancePolicyService insurancePolicyService, PatientService patientService) {
         this.insurancePolicyService = insurancePolicyService;
+        this.patientService = patientService;
     }
 
     @PostMapping("/enroll-policy")
@@ -60,6 +67,22 @@ public class InsurancePolicyController {
        return ResponseEntity.ok(dto);
 
     }
+
+    @GetMapping("/policies/insurer")
+    public ResponseEntity<List<InsurancePolicyDto>> getAllPolicies(
+            @RequestHeader("tenantId") String tenantId,@RequestHeader("role")String role) {
+        return ResponseEntity.ok(insurancePolicyService.findByInsurerId(tenantId,role));
+    }
+
+    @GetMapping("insurers/search")
+    public ResponseEntity<List<InsurerDto>>searchInsurer(@RequestParam String name,
+                                                         @RequestHeader("role") String role){
+        return ResponseEntity.ok(patientService.searchInsurer(name,role));
+
+    }
+
+
+
 
 
 }

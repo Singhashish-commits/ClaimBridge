@@ -128,7 +128,7 @@ public class AuthService {
     }
 
     public ResponseEntity<ApiResponse> updateDetails(UpdateProfileRequest request, String tenantId, String role) {
-        if(role.equals("ROLE_HOSPITAL") && !role.equals("ROLE_INSURER")) {
+        if(!role.equals("ROLE_HOSPITAL") && !role.equals("ROLE_INSURER")) {
             throw new RuntimeException("Unauthorized  to Update Details of the Organization !!");
         }
 

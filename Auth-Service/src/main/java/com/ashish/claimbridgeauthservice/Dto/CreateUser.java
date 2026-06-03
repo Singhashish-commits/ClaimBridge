@@ -10,5 +10,5 @@ import lombok.NoArgsConstructor;
 public class CreateUser {
     private String name;
     private String email;
-    private String OrganizationName;
+    private String organizationName;
 }

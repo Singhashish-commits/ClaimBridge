@@ -11,9 +11,11 @@ import java.time.LocalDateTime;
 @Service
 public class NotificationService {
     private final NotificationRepository notificationRepository;
+    private final EmailService emailService;
     @Autowired
-    public NotificationService(NotificationRepository notificationRepository) {
+    public NotificationService(NotificationRepository notificationRepository, EmailService emailService) {
         this.notificationRepository = notificationRepository;
+        this.emailService = emailService;
     }
 
     public void SendNotification(ClaimEvent event) {
@@ -29,14 +31,6 @@ public class NotificationService {
             default -> "Claim #" + event.getClaimId() + " status updated!";
         };
 
-
-
-
-
-
-
-
-
         Notification notification = new Notification();
         notification.setClaimId(event.getClaimId());
         notification.setMessage(message);
@@ -45,6 +39,11 @@ public class NotificationService {
         notification.setStatus("Sent");
         notification.setSentAt(LocalDateTime.now());
         notificationRepository.save(notification);
+//        emailService.sendEmail(
+//                event.get(),
+//                "Claim Status Update",
+//                message
+//        );
         System.out.println("notification sent for teh claim " +event.getClaimId());
 
 

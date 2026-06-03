@@ -11,8 +11,9 @@ import lombok.Data;
 public class Hospital {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id; // tenantId;
+    private Long id;
     private String tenantId;
+    private String adminName;
     private String hospitalName;
     private String hospitalAddress;
     private String hospitalCity;

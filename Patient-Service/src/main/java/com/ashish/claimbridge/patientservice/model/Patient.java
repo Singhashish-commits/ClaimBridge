@@ -37,7 +37,6 @@ public class Patient {
     private String email;
     private String tenantId;
 
-    @Column(unique = true)
     private String insuranceId;
     private String insuranceProvider;
 

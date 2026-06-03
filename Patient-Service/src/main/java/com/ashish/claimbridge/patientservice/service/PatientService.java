@@ -2,25 +2,33 @@ package com.ashish.claimbridge.patientservice.service;
 
 import com.ashish.claimbridge.patientservice.dto.ApiResponse;
 import com.ashish.claimbridge.patientservice.dto.ClaimVerifyDto;
+import com.ashish.claimbridge.patientservice.dto.InsurerDto;
 import com.ashish.claimbridge.patientservice.dto.PatientDto;
+import com.ashish.claimbridge.patientservice.mapper.InsurerDtoMapper;
 import com.ashish.claimbridge.patientservice.mapper.PatientDtoMapper;
 import com.ashish.claimbridge.patientservice.model.Gender;
+import com.ashish.claimbridge.patientservice.model.Insurer;
 import com.ashish.claimbridge.patientservice.model.Patient;
+import com.ashish.claimbridge.patientservice.repository.InsurerRepository;
 import com.ashish.claimbridge.patientservice.repository.PatientRepository;
+import org.jspecify.annotations.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
 public class PatientService {
     private final PatientRepository patientRepository;
+    private final InsurerRepository insurerRepository;
     @Autowired
-    public PatientService(PatientRepository patientRepository) {
+    public PatientService(PatientRepository patientRepository, InsurerRepository insurerRepository) {
         this.patientRepository = patientRepository;
+        this.insurerRepository = insurerRepository;
     }
 
     public ResponseEntity<ApiResponse>  savePatient(PatientDto patientDto, String role, String tenantId) {
@@ -129,5 +137,16 @@ public class PatientService {
             patientRepository.save(patient);
         }
         return new ResponseEntity<>(new ApiResponse("Patient Verified Successfully",true),HttpStatus.OK);
+    }
+
+
+    public List<InsurerDto> searchInsurer(String name, String role) {
+        if(!"ROlE_HOSPITAL".equals(role) && !"ROLE_HOSPITAL_USER".equals(role) ) {
+            throw new RuntimeException("Unauthorized: Only Hospital staff can search insurers");
+        }
+        List<Insurer> allList = insurerRepository.findByInsurerNameContainingIgnoreCase(name);
+        return allList.stream().map(InsurerDtoMapper::mapDto).toList();
+
+
     }
 }
