@@ -41,7 +41,6 @@ public class LoggingFilter implements GlobalFilter, Ordered {
                     method, path, routeId, statusCode, duration);
         }));
     }
-
     @Override
     public int getOrder() {
         return Ordered.HIGHEST_PRECEDENCE;
