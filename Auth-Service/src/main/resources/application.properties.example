@@ -1,30 +1,30 @@
 spring.application.name=claimbridge-auth-service
-server.port=8081
+server.port=${AUTH_SERVICE_PORT}
 
-# PostgreSQL Configuration
 spring.datasource.driver-class-name=org.postgresql.Driver
-spring.datasource.url=jdbc:postgresql://localhost:5432/YOUR_DATABASE_NAME
-spring.datasource.username=YOUR_DB_USERNAME
-spring.datasource.password=YOUR_DB_PASSWORD
+spring.datasource.url=jdbc:postgresql://${DB_HOST}:${DB_PORT}/${AUTH_DB}
+spring.datasource.username=${POSTGRES_USERNAME}
+spring.datasource.password=${POSTGRES_PASSWORD}
 
-# JPA / Hibernate
-spring.jpa.hibernate.ddl-auto=update
 spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.PostgreSQLDialect
+spring.jpa.hibernate.ddl-auto=${DDL_AUTO}
 
-# JWT Secret
-jwt.secret.key=YOUR_JWT_SECRET_KEY
+jwt.secret.key=${JWT_SECRET_KEY}
 
-# Eureka Client
-eureka.client.service-url.defaultZone=http://localhost:8761/eureka/
+eureka.client.service-url.defaultZone=${EUREKA_SERVER_URL}
 eureka.client.register-with-eureka=true
 eureka.client.fetch-registry=true
 
-# Eureka Instance
 eureka.instance.prefer-ip-address=true
-eureka.instance.ip-address=127.0.0.1
-eureka.instance.hostname=127.0.0.1
+eureka.instance.ip-address=${SERVICE_IP}
+eureka.instance.hostname=${SERVICE_HOSTNAME}
 eureka.instance.instance-id=${spring.application.name}:${server.port}
 
-# Network Configuration
-spring.cloud.inetutils.preferred-networks=127.0.0.1
-spring.cloud.inetutils.ignored-interfaces=awdl0,utun0,utun1,utun2
+spring.cloud.inetutils.preferred-networks=${PREFERRED_NETWORK}
+spring.cloud.inetutils.ignored-interfaces=${IGNORED_INTERFACES}
+
+spring.kafka.bootstrap-servers=${KAFKA_BOOTSTRAP_SERVERS}
+
+spring.kafka.producer.key-serializer=org.apache.kafka.common.serialization.StringSerializer
+spring.kafka.producer.value-serializer=org.springframework.kafka.support.serializer.JsonSerializer
+spring.kafka.producer.properties.spring.json.add.type.headers=true

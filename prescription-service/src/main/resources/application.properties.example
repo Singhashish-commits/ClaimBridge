@@ -1,27 +1,31 @@
-SPRING_APPLICATION_NAME=prescription-service
-SERVER_PORT=8083
+spring.application.name=prescription-service
+server.port=${PRESCRIPTION_SERVICE_PORT}
 
-SPRING_DATASOURCE_DRIVER_CLASS_NAME=org.postgresql.Driver
-SPRING_DATASOURCE_USERNAME=postgres
-SPRING_DATASOURCE_PASSWORD=admin123
-SPRING_DATASOURCE_URL=jdbc:postgresql://localhost:5432/claimbridge_prescription
 
-SPRING_JPA_PROPERTIES_HIBERNATE_DIALECT=org.hibernate.dialect.PostgreSQLDialect
+spring.datasource.driver-class-name=org.postgresql.Driver
+spring.datasource.url=jdbc:postgresql://${DB_HOST}:${DB_PORT}/${PRESCRIPTION_DB}
+spring.datasource.username=${POSTGRES_USERNAME}
+spring.datasource.password=${POSTGRES_PASSWORD}
 
-EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://localhost:8761/eureka/
-EUREKA_CLIENT_REGISTER_WITH_EUREKA=true
-EUREKA_CLIENT_FETCH_REGISTRY=true
+spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.PostgreSQLDialect
+spring.jpa.hibernate.ddl-auto=${DDL_AUTO}
 
-EUREKA_INSTANCE_PREFER_IP_ADDRESS=true
-EUREKA_INSTANCE_IP_ADDRESS=127.0.0.1
-EUREKA_INSTANCE_HOSTNAME=127.0.0.1
-EUREKA_INSTANCE_INSTANCE_ID=${SPRING_APPLICATION_NAME}:${SERVER_PORT}
 
-SPRING_CLOUD_INETUTILS_PREFERRED_NETWORKS=127.0.0.1
-SPRING_CLOUD_INETUTILS_IGNORED_INTERFACES=awdl0,utun0,utun1,utun2
+eureka.client.service-url.defaultZone=${EUREKA_SERVER_URL}
+eureka.client.register-with-eureka=true
+eureka.client.fetch-registry=true
 
-SPRING_KAFKA_BOOTSTRAP_SERVERS=localhost:9092
-SPRING_KAFKA_CONSUMER_GROUP_ID=prescription-service-group
-SPRING_KAFKA_CONSUMER_AUTO_OFFSET_RESET=earliest
-SPRING_KAFKA_CONSUMER_KEY_DESERIALIZER=org.apache.kafka.common.serialization.StringDeserializer
-SPRING_KAFKA_CONSUMER_VALUE_DESERIALIZER=org.apache.kafka.common.serialization.StringDeserializer
+eureka.instance.prefer-ip-address=true
+eureka.instance.ip-address=${SERVICE_IP}
+eureka.instance.hostname=${SERVICE_HOSTNAME}
+eureka.instance.instance-id=${spring.application.name}:${server.port}
+
+spring.cloud.inetutils.preferred-networks=${PREFERRED_NETWORK}
+spring.cloud.inetutils.ignored-interfaces=${IGNORED_INTERFACES}
+
+spring.kafka.bootstrap-servers=${KAFKA_BOOTSTRAP_SERVERS}
+
+spring.kafka.consumer.group-id=prescription-service-group
+spring.kafka.consumer.auto-offset-reset=earliest
+spring.kafka.consumer.key-deserializer=org.apache.kafka.common.serialization.StringDeserializer
+spring.kafka.consumer.value-deserializer=org.apache.kafka.common.serialization.StringDeserializer

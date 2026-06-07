@@ -1,4 +1,4 @@
-FROM maven:3.8.8-eclipse-temurin-17 AS builder
+FROM maven:3.9.6-eclipse-temurin-21 AS builder
 WORKDIR /build
 
 # Cache dependencies first (makes future builds much faster)
@@ -11,7 +11,7 @@ COPY src ./src
 RUN mvn clean package -DskipTests
 
 # Stage 2: Create the lightweight runtime image
-FROM eclipse-temurin:17-jre-alpine
+FROM eclipse-temurin:21-jre-jammy
 WORKDIR /app
 
 # Copy the generated JAR from the builder stage

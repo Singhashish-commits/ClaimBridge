@@ -1,0 +1,7 @@
+CREATE DATABASE claimbridge_auth;
+CREATE DATABASE claimbridge_patient;
+CREATE DATABASE claimbridge_prescription;
+CREATE DATABASE claimbridge_claim_service;
+CREATE DATABASE claimbridge_fraud_service;
+CREATE DATABASE claimbridge_notification_service;
+CREATE DATABASE claimbridge_audit_service;

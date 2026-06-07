@@ -48,6 +48,7 @@ public class SecurityConfig {
         return new BCryptPasswordEncoder(12);
     }
     @Bean
+
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http.csrf(customizer-> customizer.disable());
         http.cors(Customizer.withDefaults()) ;

@@ -47,7 +47,6 @@ public class GatewayMatrixFilter implements GlobalFilter, Ordered {
             // Extract metadata tags
             String method = exchange.getRequest().getMethod().name();
 
-            // 🚨 FIX APPLIED HERE: Extract the Route object safely, then get its ID
             Route route = exchange.getAttribute(ServerWebExchangeUtils.GATEWAY_ROUTE_ATTR);
             String routeId = (route != null) ? route.getId() : "unknown_route";
 
