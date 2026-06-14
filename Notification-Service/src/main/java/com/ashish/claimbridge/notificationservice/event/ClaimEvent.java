@@ -27,4 +27,5 @@ public class ClaimEvent {
     private Double usedAmount;
     private Double claimAmount;
 
+
 }

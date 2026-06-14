@@ -22,9 +22,6 @@ public class AuditService {
         this.auditRepository = auditRepository;
         this.objectMapper = objectMapper;
     }
-
-
-
     public void saveAuditEvent(String payload, String topic) {
         try{
             JsonNode node = objectMapper.readTree(payload);
@@ -94,7 +91,6 @@ public class AuditService {
            throw new EntityNotFoundException("No audit events found for tenant: " + tenantId);
        }
        return events;
-
     }
 
     public List<AuditEvent> findByHospitalId(String hospitalId, String role, String tenantId) {
@@ -109,7 +105,6 @@ public class AuditService {
             throw new EntityNotFoundException("No audit events found for Hospital   : " + tenantId);
         }
         return events;
-
     }
 
     public List<AuditEvent> findByInsurerId(String insurerId, String role, String tenantId) {

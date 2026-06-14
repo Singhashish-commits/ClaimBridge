@@ -28,5 +28,8 @@ public class ClaimEvent {
     private Double coverageLimit;
     private Double usedAmount;
     private Double claimAmount;
+    private String hospitalEmail;
+    private String insurerEmail;
+
 
 }

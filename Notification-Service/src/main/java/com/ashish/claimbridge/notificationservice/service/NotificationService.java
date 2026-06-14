@@ -39,8 +39,8 @@ public class NotificationService {
         notification.setStatus("Sent");
         notification.setSentAt(LocalDateTime.now());
         notificationRepository.save(notification);
-//        emailService.sendEmail(
-//                event.get(),
+//        emailService.sendMail(
+//                event.get,
 //                "Claim Status Update",
 //                message
 //        );

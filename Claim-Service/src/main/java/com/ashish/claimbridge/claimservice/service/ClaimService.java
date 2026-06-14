@@ -375,6 +375,7 @@ public class ClaimService {
         event.setCoverageLimit(dto.getCoverageLimit());
         event.setUsedAmount(dto.getUsedAmount());
         event.setClaimAmount(claim.getTotalClaimAmount());
+//        event.setHospitalEmail();
 
 
         return event;
