@@ -1,0 +1,2 @@
+   com.ashish.common.config.CircuitBreakerConfiguration
+   com.ashish.common.feign.CommonFeignErrorDecoder
