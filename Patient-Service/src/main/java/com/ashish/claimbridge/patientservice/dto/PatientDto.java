@@ -22,5 +22,7 @@ public class PatientDto {
     private String address;
     private String city;
     private String state;
+    private Long id;
+    private String hospitalId;
 
 }

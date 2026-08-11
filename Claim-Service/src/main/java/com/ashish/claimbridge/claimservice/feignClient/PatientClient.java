@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestParam;
 
-@FeignClient(name = "patient-service")
+@FeignClient(name = "patient-service",fallbackFactory = PatientClientFallbackFactory.class)
 public interface PatientClient {
     @GetMapping("/api/patients/get-patient/{id}")
     ResponseEntity<PatientDto> getPatientById(@PathVariable("id") Long id,

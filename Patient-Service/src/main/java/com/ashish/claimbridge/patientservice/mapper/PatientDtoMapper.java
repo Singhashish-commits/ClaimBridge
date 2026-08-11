@@ -18,6 +18,8 @@ public class PatientDtoMapper {
         patientDto.setCity(patient.getCity());
         patientDto.setState(patient.getState());
         patientDto.setAadhaarId(patient.getAadhaarId());
+        patientDto.setId(patient.getId());
+        patientDto.setHospitalId(patient.getTenantId());
         return patientDto;
     }
 }

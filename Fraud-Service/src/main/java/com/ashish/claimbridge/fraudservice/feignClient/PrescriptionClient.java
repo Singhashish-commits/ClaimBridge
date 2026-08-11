@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.RequestHeader;
 
 import java.util.List;
 
-@FeignClient(name = "prescription-service")
+@FeignClient(name = "prescription-service",fallback = PrescriptionClientFallbackFactory.class)
 public interface PrescriptionClient {
     @GetMapping("api/prescription/list/{patientId}")
     ResponseEntity<List<PrescriptionItemDto>> ItemListByPateintId(

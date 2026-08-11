@@ -4,10 +4,10 @@ import lombok.Data;
 
 @Data
 public class PatientDto {
-    private Long Id;
+    private Long id;
     private String firstName;
     private String lastName;
-    private String tenantId;
-    private String insurerId;
+    private String hospitalId;
+    private String insuranceId;
 
 }

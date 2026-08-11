@@ -28,7 +28,7 @@ public class DrugService {
     public List<DrugDto> searchDrug(String name, Long patientId, String role, String tenantId) {
         ResponseEntity<PatientDto> check = patientClient.getPatient(patientId,tenantId,role);
         PatientDto patientDto = check.getBody();
-        String insurerId = patientDto.getInsurerId();
+        String insurerId = patientDto.getInsuranceId();
         return drugRepository.findByDrugNameContainingIgnoreCaseAndInsurerId(name,insurerId).stream().map(drug ->new DrugDto(
                 drug.getDrugCode(),
                 drug.getDrugName(),
@@ -40,7 +40,7 @@ public class DrugService {
     public  DrugDto findByDrugCode(String drugCode,Long patientId, String role, String tenantId ) {
                 ResponseEntity<PatientDto> check = patientClient.getPatient(patientId,tenantId,role);
                 PatientDto patientDto = check.getBody();
-                String insurerId = patientDto.getInsurerId();
+                String insurerId = patientDto.getInsuranceId();
                 Drug drug = drugRepository.findByDrugCodeAndInsurerId(drugCode,insurerId)
                         .orElseThrow(()-> new EntityNotFoundException("Drug Doesnt Exist"));
                 return new DrugDto(drug.getDrugCode(),drug.getCategory(),drug.getDrugName());
