@@ -14,18 +14,14 @@ public class PatientClientFallbackFactory implements FallbackFactory<PatientClie
     @Override
     public PatientClient create(Throwable cause) {
         log.warn("Patient service fallback triggered for id: {}", cause.getMessage(), cause);
-        return new PatientClient() {
-
-            @Override
-            public ResponseEntity<PatientDto> getPatient(Long id, String tenantId, String role) {
-               PatientDto patientDto = new PatientDto();
-               patientDto.setId(id);
-              patientDto.setFirstName("Unknown");
-              patientDto.setLastName("Unknown");
-              patientDto.setInsuranceId("Unknown");
-              patientDto.setHospitalId(tenantId);
-               return new ResponseEntity<>(patientDto, HttpStatus.SERVICE_UNAVAILABLE);
-            }
+        return (id, tenantId, role) -> {
+           PatientDto patientDto = new PatientDto();
+           patientDto.setId(id);
+          patientDto.setFirstName("Unknown");
+          patientDto.setLastName("Unknown");
+          patientDto.setInsuranceId("Unknown");
+          patientDto.setHospitalId(tenantId);
+           return new ResponseEntity<>(patientDto, HttpStatus.SERVICE_UNAVAILABLE);
         };
     }
 }
