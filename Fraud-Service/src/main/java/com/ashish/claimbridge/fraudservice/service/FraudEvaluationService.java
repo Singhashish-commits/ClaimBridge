@@ -54,7 +54,6 @@ public class FraudEvaluationService {
         record.setFlaggedRule(flaggedRules);
 
         fraudRepository.save(record);
-
         if(finalResult!= FraudResult.PASS){
             FraudFlaggedEvent fraudEvent = new FraudFlaggedEvent();
             fraudEvent.setClaimId(event.getClaimId());

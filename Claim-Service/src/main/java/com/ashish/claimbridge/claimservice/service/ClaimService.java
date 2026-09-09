@@ -13,12 +13,17 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import feign.FeignException;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
+import org.redisson.api.RLock;
+import org.redisson.api.RedissonClient;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 @Service
 public class ClaimService {
@@ -30,21 +35,49 @@ public class ClaimService {
     private final KafkaProducerService kafkaProducerService;
     private final ClaimHistoryRepo claimHistoryRepo;
     private final OutBoxService outBoxService;
+    private final RedissonClient redissonClient;
 
-    public ClaimService(ClaimRepository claimRepository, PatientClient patientClient, PrescriptionClient prescriptionClient, KafkaProducerService kafkaProducerService, ClaimHistoryRepo claimHistoryRepo,   OutBoxService outBoxService) {
+    public ClaimService(ClaimRepository claimRepository, PatientClient patientClient, PrescriptionClient prescriptionClient, KafkaProducerService kafkaProducerService, ClaimHistoryRepo claimHistoryRepo,   OutBoxService outBoxService, RedissonClient redissonClient) {
         this.claimRepository = claimRepository;
         this.patientClient = patientClient;
         this.prescriptionClient = prescriptionClient;
         this.kafkaProducerService = kafkaProducerService;
         this.claimHistoryRepo = claimHistoryRepo;
         this.outBoxService = outBoxService;
+        this.redissonClient = redissonClient;
     }
+    @Autowired
+    @Lazy
+    private ClaimService self;
 
-    @Transactional
+
     public ApiResponse submitClaim(ClaimSubmitDto claimSubmitDto, String tenantId, String role, String email) {
         if (!role.equals("ROLE_HOSPITAL") && !role.equals("ROLE_HOSPITAL_USER")) {
             throw new IllegalArgumentException("not Authorized to submit claim");
         }
+        String lockKey = "claim:lock:prescription:" + claimSubmitDto.getPrescriptionId();
+        RLock lock = redissonClient.getLock(lockKey);
+        try{
+            boolean isLocked =  lock.tryLock(5,30, TimeUnit.SECONDS);
+            if(!isLocked){
+                throw new IllegalStateException("A claim for this prescription is currently being processed by another request.");
+            }
+            return self.submitClaimHelper(claimSubmitDto, tenantId, role, email);
+        }catch(InterruptedException e){
+                Thread.currentThread().interrupt();
+                throw new  IllegalStateException(e);
+        }finally {
+            if(lock.isHeldByCurrentThread()){
+                lock.unlock();
+            }
+        }
+
+
+    }
+
+    @Transactional
+    public ApiResponse submitClaimHelper(ClaimSubmitDto claimSubmitDto, String tenantId, String role, String email) {
+
         boolean billAlreadyExists = claimRepository
                 .existsByPrescriptionIdAndStatusNotIn(claimSubmitDto.getPrescriptionId(), List.of(
                         ClaimStatus.REJECTED,
@@ -109,7 +142,9 @@ public class ClaimService {
         kafkaProducerService.sendClaimSubmittedEvent(buildEvent(savedClaim,"claim-submitted"));
         return new ApiResponse("Claim Submitted Successfully", true);
 
+
     }
+
 
     public ClaimResponse getClaimById(Long id, String tenantId, String role) {
         Claim claim = claimRepository.findById(id)
